@@ -1,4 +1,4 @@
-# Trình Dịch Tiếng Nhật Sang Tiếng Việt - JPExtension
+# Extension dịch từ vựng Tiếng Nhật Sang Tiếng Việt - JPExtension
 
 Extension Chrome để dịch tiếng Nhật sang tiếng Việt và hiển thị hiragana khi bôi đen text.
 
