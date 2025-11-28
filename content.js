@@ -39,47 +39,41 @@ function updatePopupPosition() {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Scroll positions
-    const scrollX = window.scrollX || window.pageXOffset;
-    const scrollY = window.scrollY || window.pageYOffset;
-
     // Tính toán vị trí (ưu tiên hiển thị bên phải text)
-    // Sử dụng coordinates relative to document (bao gồm scroll)
-    let left = rect.right + 5 + scrollX; // Mặc định: bên phải text 5px
-    let top = rect.top + scrollY;        // Mặc định: căn top với text
+    let left = rect.right + 5; // Bên phải text 5px
+    let top = rect.top;        // Căn top với text
 
     // 1. Xử lý vị trí ngang (Horizontal)
     // Kiểm tra xem có đủ chỗ bên phải trong viewport không
-    // (left - scrollX) là vị trí relative to viewport
-    if ((left - scrollX) + popupWidth > viewportWidth - 10) {
+    if (left + popupWidth > viewportWidth - 10) {
       // Nếu không đủ chỗ bên phải, chuyển sang bên trái
-      left = (rect.left + scrollX) - popupWidth - 10;
+      left = rect.left - popupWidth - 10;
     }
 
     // Nếu vẫn bị tràn ra bên trái màn hình
-    if (left < scrollX + 10) {
-      left = scrollX + 10;
+    if (left < 10) {
+      left = 10;
     }
 
     // 2. Xử lý vị trí dọc (Vertical)
     // Nếu popup bị tràn xuống dưới màn hình
-    if ((top - scrollY) + popupHeight > viewportHeight - 10) {
+    if (top + popupHeight > viewportHeight - 10) {
       // Đẩy lên trên
-      top = (rect.bottom + scrollY) - popupHeight;
+      top = rect.bottom - popupHeight;
 
       // Nếu vẫn thấp hơn viewport bottom (do text cao), căn theo viewport bottom
-      if (top + popupHeight > scrollY + viewportHeight) {
-        top = scrollY + viewportHeight - popupHeight - 10;
+      if (top + popupHeight > viewportHeight) {
+        top = viewportHeight - popupHeight - 10;
       }
     }
 
     // Nếu popup bị tràn lên trên màn hình
-    if (top < scrollY + 10) {
-      top = scrollY + 10;
+    if (top < 10) {
+      top = 10;
     }
 
-    // Áp dụng vị trí ABSOLUTE
-    translationPopup.style.position = "absolute";
+    // Áp dụng vị trí FIXED
+    translationPopup.style.position = "fixed";
     translationPopup.style.top = top + "px";
     translationPopup.style.left = left + "px";
     translationPopup.style.right = "auto";
@@ -115,8 +109,9 @@ function createTranslationPopup(range, text) {
 
   document.body.appendChild(translationPopup);
 
-  // Thêm event listener cho resize để cập nhật vị trí
+  // Thêm event listener cho resize và scroll để cập nhật vị trí
   window.addEventListener('resize', updatePopupPosition);
+  window.addEventListener('scroll', updatePopupPosition);
 
   // Đợi popup render xong rồi mới tính toán vị trí
   updatePopupPosition();
@@ -231,6 +226,7 @@ function displayTranslation(translation, hiragana, original, examples = [], sour
     e.stopPropagation(); // Ngăn event bubble lên document
     if (translationPopup) {
       window.removeEventListener('resize', updatePopupPosition);
+      window.removeEventListener('scroll', updatePopupPosition);
       translationPopup.remove();
       translationPopup = null;
       selectedRange = null;
@@ -257,6 +253,7 @@ function displayError(errorMessage) {
     e.stopPropagation(); // Ngăn event bubble lên document
     if (translationPopup) {
       window.removeEventListener('resize', updatePopupPosition);
+      window.removeEventListener('scroll', updatePopupPosition);
       translationPopup.remove();
       translationPopup = null;
       selectedRange = null;
@@ -324,6 +321,7 @@ document.addEventListener("click", function (e) {
     !translationPopup.contains(e.target)
   ) {
     window.removeEventListener('resize', updatePopupPosition);
+    window.removeEventListener('scroll', updatePopupPosition);
     translationPopup.remove();
     translationPopup = null;
     selectedRange = null;
