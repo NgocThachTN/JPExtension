@@ -19,6 +19,7 @@ const kuroshiro = new Kuroshiro();
 let kuroshiroInitialized = false;
 (async () => {
   try {
+    console.log("Starting Kuroshiro initialization...");
     await kuroshiro.init(new KuromojiAnalyzer());
     kuroshiroInitialized = true;
     console.log("Kuroshiro initialized successfully");
@@ -27,12 +28,38 @@ let kuroshiroInitialized = false;
   }
 })();
 
+// Helper to wait for Kuroshiro
+async function waitForKuroshiro() {
+  if (kuroshiroInitialized) return true;
+  console.log("Waiting for Kuroshiro to initialize...");
+  let retries = 0;
+  while (!kuroshiroInitialized && retries < 20) { // Wait up to 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 100));
+    retries++;
+  }
+  return kuroshiroInitialized;
+}
+
 // Middleware
 app.use(cors()); // Cho phép Chrome extension gọi API
 app.use(express.json()); // Parse JSON body
 
 // Dictionary cache - lưu các từ đã tra để tăng tốc độ
 const dictionaryCache = {};
+
+// Helper function to add furigana
+async function addFurigana(text) {
+  await waitForKuroshiro();
+  if (!kuroshiroInitialized || !text) return text;
+  try {
+    // Check if text already contains ruby tags to avoid double conversion
+    if (text.includes("<ruby>")) return text;
+    return await kuroshiro.convert(text, { mode: "furigana", to: "hiragana" });
+  } catch (e) {
+    console.error("Kuroshiro convert error:", e);
+    return text;
+  }
+}
 
 // Hàm gọi Jisho.org API để tra từ điển
 async function searchJisho(text) {
@@ -77,15 +104,8 @@ async function searchJisho(text) {
 
           examples = await Promise.all(rawExamples.map(async (result) => {
             const japanese = result.kanji || result.kana || "";
-            let html = japanese;
-
-            if (kuroshiroInitialized && japanese) {
-              try {
-                html = await kuroshiro.convert(japanese, { mode: "furigana", to: "hiragana" });
-              } catch (e) {
-                console.error("Kuroshiro convert error:", e);
-              }
-            }
+            // Use helper to generate furigana
+            const html = await addFurigana(japanese);
 
             return {
               japanese: japanese,
@@ -250,11 +270,17 @@ async function translateJapanese(text) {
         : "";
 
       if (japaneseExample) {
+        // Ensure we have HTML with furigana
+        let html = example.html;
+        if (!html || html === japaneseExample) {
+          html = await addFurigana(japaneseExample);
+        }
+
         processedExamples.push({
           japanese: japaneseExample,
           english: englishExample,
           vietnamese: vietnameseExample,
-          html: example.html || japaneseExample // Pass through HTML or fallback to text
+          html: html // Pass through HTML or fallback to text
         });
       }
     }
@@ -302,17 +328,8 @@ async function translateJapanese(text) {
     const vietnamese1 = await translateText(example1, 'ja', 'vi');
     const vietnamese2 = await translateText(example2, 'ja', 'vi');
 
-    let html1 = example1;
-    let html2 = example2;
-
-    if (kuroshiroInitialized) {
-      try {
-        html1 = await kuroshiro.convert(example1, { mode: "furigana", to: "hiragana" });
-        html2 = await kuroshiro.convert(example2, { mode: "furigana", to: "hiragana" });
-      } catch (e) {
-        console.error("Kuroshiro manual example error", e);
-      }
-    }
+    let html1 = await addFurigana(example1);
+    let html2 = await addFurigana(example2);
 
     processedExamples.push(
       {
