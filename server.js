@@ -8,6 +8,8 @@ const JishoAPI = require("unofficial-jisho-api");
 const Kuroshiro = require("kuroshiro").default;
 const KuromojiAnalyzer = require("kuroshiro-analyzer-kuromoji");
 
+const path = require("path");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -20,7 +22,9 @@ let kuroshiroInitialized = false;
 (async () => {
   try {
     console.log("Starting Kuroshiro initialization...");
-    await kuroshiro.init(new KuromojiAnalyzer());
+    await kuroshiro.init(new KuromojiAnalyzer({
+      dictPath: path.join(__dirname, "dict")
+    }));
     kuroshiroInitialized = true;
     console.log("Kuroshiro initialized successfully");
   } catch (err) {
