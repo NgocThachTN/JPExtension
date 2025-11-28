@@ -2,6 +2,9 @@
 
 Extension Chrome để dịch tiếng Nhật sang tiếng Việt và hiển thị hiragana khi bôi đen text.
 
+<img width="1006" height="647" alt="image" src="https://github.com/user-attachments/assets/723c6f10-20a3-4ab8-90ec-49f882b54672" />
+
+
 **Lưu ý:** Backend server hiện đã được deploy lên OnRender. Bạn có thể sử dụng extension trực tiếp mà không cần khởi động server cục bộ, tuy nhiên việc chạy server cục bộ vẫn được hỗ trợ cho mục đích phát triển và tùy chỉnh. 
 Khi gửi request tra từ lần đầu có thể tốn khoảng 1 phút vì server deploy miễn phí của Render bị giới hạn, sau 15 phút không hoạt động server sẽ "sleep".
 
