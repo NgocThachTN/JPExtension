@@ -1,6 +1,6 @@
 /* CSS cho popup translation */
 #jp-translator-popup {
-  position: absolute;
+  position: fixed;
   z-index: 10000;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   pointer-events: auto;
@@ -10,7 +10,7 @@
   background: white;
   border: 2px solid #8B4513; /* Viền màu nâu */
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   min-width: 200px;
   max-width: 350px;
@@ -132,3 +132,21 @@ rt {
   background: #d32f2f;
 }
 
+
+/* Style riêng cho popup dịch câu (Sentence Mode) */
+.jp-translator-popup.sentence-mode .jp-translator-content {
+  border: 2px solid #2196F3; /* Viền màu xanh dương */
+  padding: 12px;
+  max-width: 400px; /* Rộng hơn một chút */
+}
+
+.jp-translator-popup.sentence-mode .jp-translator-translation {
+  font-size: 16px;
+  color: #333; /* Màu chữ đậm hơn */
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.jp-translator-popup.sentence-mode .jp-translator-loading {
+  color: #2196F3;
+}

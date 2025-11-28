@@ -116,20 +116,36 @@ async function searchJisho(text) {
     return { success: false, error: error.message };
   }
 }
-
 // Hàm dịch tiếng Anh sang tiếng Việt bằng Google Translate (miễn phí)
 async function translateText(text, sl = 'en', tl = 'vi') {
   try {
-    // Sử dụng Google Translate API miễn phí (không cần key)
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(
-      text
-    )}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data && data[0] && data[0][0]) {
-      return data[0][0][0];
+    // Sử dụng Google Translate API (endpoint public)
+    // Chuyển sang translate.google.com và bỏ header User-Agent để tránh bị chặn
+    if (text.length > 1000) {
+      text = text.substring(0, 1000);
     }
+
+    const url = `https://translate.google.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const textResponse = await response.text();
+
+    try {
+      const data = JSON.parse(textResponse);
+      if (data && data[0]) {
+        // Google Translate trả về mảng các đoạn dịch, cần nối lại
+        return data[0].map(segment => segment[0]).join("");
+      }
+    } catch (e) {
+      console.error("Lỗi parse JSON từ Google Translate:", e);
+      console.log("Response text:", textResponse.substring(0, 200)); // Log 200 ký tự đầu để debug
+    }
+
     return text; // Nếu không dịch được, trả về text gốc
   } catch (error) {
     console.error("Lỗi khi dịch sang tiếng Việt:", error);
@@ -144,29 +160,51 @@ async function translateJapanese(text) {
     return dictionaryCache[text];
   }
 
+  // 1. Chế độ dịch câu (Sentence Mode) - Text dài > 20 ký tự
+  // Dùng Google Translate trực tiếp, bỏ qua Jisho
+  if (text.length > 20) {
+    console.log(`Phát hiện câu dài (${text.length} ký tự), sử dụng Google Translate trực tiếp.`);
+    const googleTranslation = await translateText(text, 'ja', 'vi');
+
+    return {
+      success: true,
+      original: text,
+      hiragana: "", // Không cần hiragana cho câu
+      translation: googleTranslation,
+      english: "Google Translate",
+      examples: [],
+      source: "google"
+    };
+  }
+
+  // 2. Chế độ tra từ (Word Mode) - Text ngắn <= 20 ký tự
   // Gọi Jisho API để tra từ điển
   const jishoResult = await searchJisho(text);
 
   if (!jishoResult.success) {
-    // Nếu Jisho không tìm thấy, thử kiểm tra xem có phải hiragana/katakana không
-    const hiraganaRegex = /^[\u3040-\u309F\u30A0-\u30FF]+$/;
-    if (hiraganaRegex.test(text)) {
-      // Nếu là hiragana/katakana thuần, trả về chính nó
-      return {
-        success: false,
-        original: text,
-        hiragana: text,
-        translation: "Không tìm thấy trong từ điển",
-        error: "Từ này không có trong Jisho dictionary",
-      };
+    // Nếu Jisho không tìm thấy, chuyển sang Google Translate (fallback)
+    console.log(`Jisho không tìm thấy từ "${text}", chuyển sang Google Translate...`);
+
+    const googleTranslation = await translateText(text, 'ja', 'vi');
+
+    // Tạo reading (hiragana) bằng Kuroshiro
+    let hiragana = "";
+    if (kuroshiroInitialized) {
+      try {
+        hiragana = await kuroshiro.convert(text, { to: "hiragana", mode: "normal" });
+      } catch (e) {
+        console.error("Lỗi Kuroshiro convert:", e);
+      }
     }
 
     return {
-      success: false,
+      success: true,
       original: text,
-      hiragana: text,
-      translation: "Không tìm thấy",
-      error: "Không tìm thấy trong từ điển Jisho",
+      hiragana: hiragana,
+      translation: googleTranslation,
+      english: "Google Translate",
+      examples: [], // Không có ví dụ cho Google Translate
+      source: "google" // Đánh dấu nguồn
     };
   }
 
