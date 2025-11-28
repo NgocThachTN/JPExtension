@@ -90,10 +90,10 @@ async function searchJisho(text) {
 }
 
 // Hàm dịch tiếng Anh sang tiếng Việt bằng Google Translate (miễn phí)
-async function translateToVietnamese(text) {
+async function translateText(text, sl = 'en', tl = 'vi') {
   try {
     // Sử dụng Google Translate API miễn phí (không cần key)
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(
       text
     )}`;
     const response = await fetch(url);
@@ -155,7 +155,7 @@ async function translateJapanese(text) {
 
   // Dịch tất cả nghĩa sang tiếng Việt
   const translatedMeanings = await Promise.all(
-    jishoResult.meanings.map((m) => translateToVietnamese(m))
+    jishoResult.meanings.map((m) => translateText(m, 'en', 'vi'))
   );
   const allMeanings = translatedMeanings.join(", ");
 
@@ -179,8 +179,8 @@ async function translateJapanese(text) {
         japaneseExample = example.kana;
       }
 
-      const vietnameseExample = englishExample
-        ? await translateToVietnamese(englishExample)
+      const vietnameseExample = japaneseExample
+        ? await translateText(japaneseExample, 'ja', 'vi')
         : "";
 
       if (japaneseExample) {
@@ -198,7 +198,7 @@ async function translateJapanese(text) {
     console.log(`Không có ví dụ từ Jisho, tạo ví dụ mẫu cho từ "${text}"`);
     // Tạo ví dụ mẫu dựa trên từ và nghĩa
     const firstMeaning = jishoResult.meanings[0] || "";
-    const vietnameseMeaning = await translateToVietnamese(firstMeaning);
+    const vietnameseMeaning = await translateText(firstMeaning, 'en', 'vi');
 
     // Tạo ví dụ phù hợp với loại từ
     // Kiểm tra xem từ có kết thúc bằng động từ không (る, う, etc.)
@@ -232,8 +232,8 @@ async function translateJapanese(text) {
     }
 
     // Dịch ví dụ sang tiếng Việt
-    const vietnamese1 = await translateToVietnamese(english1);
-    const vietnamese2 = await translateToVietnamese(english2);
+    const vietnamese1 = await translateText(example1, 'ja', 'vi');
+    const vietnamese2 = await translateText(example2, 'ja', 'vi');
 
     processedExamples.push(
       {
