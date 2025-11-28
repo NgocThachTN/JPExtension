@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+    }
+    h1 {
+      font-size: 18px;
+      color: #333;
+      margin-top: 0;
+      text-align: center;
+    }
+    .info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .status.connected {
+      background: #c8e6c9;
+      color: #2e7d32;
+    }
+    .status.disconnected {
+      background: #ffcdd2;
+      color: #c62828;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>🇯🇵 Japanese Translator</h1>
+  
+  <div class="info">
+    <strong>Cách sử dụng:</strong><br>
+    1. Bôi đen text tiếng Nhật trên trang web<br>
+    2. Popup sẽ hiển thị bản dịch và hiragana
+  </div>
+
+  <div id="status" class="status disconnected">
+    Đang kiểm tra kết nối...
+  </div>
+
+  <button id="testBtn">Test kết nối Server</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
