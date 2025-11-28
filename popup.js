@@ -1,6 +1,6 @@
 // Popup script - Kiểm tra kết nối với server
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const statusDiv = document.getElementById('status');
   const testBtn = document.getElementById('testBtn');
 
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
   checkConnection();
 
   // Test kết nối khi click button
-  testBtn.addEventListener('click', function() {
+  testBtn.addEventListener('click', function () {
     checkConnection();
   });
 
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     statusDiv.className = 'status';
 
     try {
-      const response = await fetch('http://localhost:3000/api/health', {
+      const response = await fetch('https://jpextension.onrender.com/api/health', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         throw new Error('Server không phản hồi');
       }
     } catch (error) {
-      statusDiv.textContent = '✗ Không thể kết nối. Hãy chạy: npm start';
+      statusDiv.textContent = '✗ Không thể kết nối đến server';
       statusDiv.className = 'status disconnected';
     }
   }

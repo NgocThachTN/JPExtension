@@ -136,7 +136,7 @@ function createTranslationPopup(range, text) {
 // Hàm gọi API backend để dịch
 async function translateText(text) {
   try {
-    const response = await fetch("http://localhost:3000/api/translate", {
+    const response = await fetch("https://jpextension.onrender.com/api/translate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -9,7 +9,7 @@ const Kuroshiro = require("kuroshiro").default;
 const KuromojiAnalyzer = require("kuroshiro-analyzer-kuromoji");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Khởi tạo Jisho API client
 const jisho = new JishoAPI();
