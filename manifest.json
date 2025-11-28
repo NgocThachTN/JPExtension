@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Dịch tiếng Nhật sang tiếng Việt và hiển thị hiragana khi bôi đen text",
   "permissions": ["activeTab", "storage"],
-  "host_permissions": ["https://jpextension.onrender.com/*"],
+  "host_permissions": ["https://jp-extension.vercel.app/*"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

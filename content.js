@@ -134,7 +134,7 @@ function createTranslationPopup(range, text) {
 // Hàm gọi API backend để dịch
 async function translateText(text) {
   try {
-    const response = await fetch("https://jpextension.onrender.com/api/translate", {
+    const response = await fetch("https://jp-extension.vercel.app/api/translate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
