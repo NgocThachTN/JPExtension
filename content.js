@@ -173,9 +173,8 @@ function displayTranslation(translation, hiragana, original, examples = []) {
   if (examples && examples.length > 0) {
     examplesHTML = '<div class="jp-translator-examples-title">📝 Ví dụ:</div>';
     examples.forEach((example) => {
-      const jpWithFurigana = example.hiragana
-        ? `<ruby>${example.japanese}<rt>${example.hiragana}</rt></ruby>`
-        : example.japanese;
+      // Sử dụng HTML đã được tạo từ backend (có Furigana chuẩn) hoặc fallback về text gốc
+      const jpWithFurigana = example.html || example.japanese;
       examplesHTML += `
         <div class="jp-translator-example">
           <div class="jp-translator-example-jp">${jpWithFurigana}</div>

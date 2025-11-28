@@ -5,11 +5,27 @@
 const express = require("express");
 const cors = require("cors");
 const JishoAPI = require("unofficial-jisho-api");
+const Kuroshiro = require("kuroshiro").default;
+const KuromojiAnalyzer = require("kuroshiro-analyzer-kuromoji");
+
 const app = express();
 const PORT = 3000;
 
 // Khởi tạo Jisho API client
 const jisho = new JishoAPI();
+const kuroshiro = new Kuroshiro();
+
+// Initialize Kuroshiro
+let kuroshiroInitialized = false;
+(async () => {
+  try {
+    await kuroshiro.init(new KuromojiAnalyzer());
+    kuroshiroInitialized = true;
+    console.log("Kuroshiro initialized successfully");
+  } catch (err) {
+    console.error("Failed to initialize Kuroshiro:", err);
+  }
+})();
 
 // Middleware
 app.use(cors()); // Cho phép Chrome extension gọi API
@@ -57,16 +73,28 @@ async function searchJisho(text) {
 
         if (examplesData.results && examplesData.results.length > 0) {
           // Lấy tối đa 2 ví dụ đầu tiên
-          examples = examplesData.results
-            .slice(0, 2)
-            .map((result) => {
-              // unofficial-jisho-api trả về: kanji, kana, english
-              return {
-                japanese: result.kanji || result.kana || "",
-                english: result.english || "",
-              };
-            })
-            .filter((ex) => ex.japanese); // Lọc bỏ những ví dụ không có Japanese text
+          const rawExamples = examplesData.results.slice(0, 2);
+
+          examples = await Promise.all(rawExamples.map(async (result) => {
+            const japanese = result.kanji || result.kana || "";
+            let html = japanese;
+
+            if (kuroshiroInitialized && japanese) {
+              try {
+                html = await kuroshiro.convert(japanese, { mode: "furigana", to: "hiragana" });
+              } catch (e) {
+                console.error("Kuroshiro convert error:", e);
+              }
+            }
+
+            return {
+              japanese: japanese,
+              english: result.english || "",
+              html: html
+            };
+          }));
+
+          examples = examples.filter((ex) => ex.japanese); // Lọc bỏ những ví dụ không có Japanese text
         }
       } catch (err) {
         // Nếu không lấy được examples, sẽ tạo ví dụ mẫu sau
@@ -188,6 +216,7 @@ async function translateJapanese(text) {
           japanese: japaneseExample,
           english: englishExample,
           vietnamese: vietnameseExample,
+          html: example.html || japaneseExample // Pass through HTML or fallback to text
         });
       }
     }
@@ -235,16 +264,30 @@ async function translateJapanese(text) {
     const vietnamese1 = await translateText(example1, 'ja', 'vi');
     const vietnamese2 = await translateText(example2, 'ja', 'vi');
 
+    let html1 = example1;
+    let html2 = example2;
+
+    if (kuroshiroInitialized) {
+      try {
+        html1 = await kuroshiro.convert(example1, { mode: "furigana", to: "hiragana" });
+        html2 = await kuroshiro.convert(example2, { mode: "furigana", to: "hiragana" });
+      } catch (e) {
+        console.error("Kuroshiro manual example error", e);
+      }
+    }
+
     processedExamples.push(
       {
         japanese: example1,
         english: english1,
         vietnamese: vietnamese1,
+        html: html1
       },
       {
         japanese: example2,
         english: english2,
         vietnamese: vietnamese2,
+        html: html2
       }
     );
   }
