@@ -12,13 +12,22 @@ document.addEventListener('DOMContentLoaded', function () {
     checkConnection();
   });
 
+  // Hàm cập nhật status với text
+  function updateStatus(text, className) {
+    statusDiv.textContent = text;
+    statusDiv.className = `status ${className}`;
+  }
+
   // Hàm kiểm tra kết nối với server
   async function checkConnection() {
-    statusDiv.textContent = 'Đang kiểm tra...';
-    statusDiv.className = 'status';
+    // Disable button khi đang kiểm tra
+    testBtn.disabled = true;
+    testBtn.querySelector('.button-text').textContent = 'Đang kiểm tra...';
+
+    updateStatus('Đang kiểm tra kết nối...', 'checking');
 
     try {
-      const response = await fetch('https://jpextension.onrender.com/api/health', {
+      const response = await fetch('https://jp-extension.vercel.app/api/health', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -26,14 +35,16 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       if (response.ok) {
-        statusDiv.textContent = '✓ Đã kết nối với server';
-        statusDiv.className = 'status connected';
+        updateStatus('Đã kết nối với server', 'connected');
       } else {
         throw new Error('Server không phản hồi');
       }
     } catch (error) {
-      statusDiv.textContent = '✗ Không thể kết nối đến server';
-      statusDiv.className = 'status disconnected';
+      updateStatus('Không thể kết nối đến server', 'disconnected');
+    } finally {
+      // Enable button sau khi kiểm tra xong
+      testBtn.disabled = false;
+      testBtn.querySelector('.button-text').textContent = 'Test kết nối Server';
     }
   }
 });
