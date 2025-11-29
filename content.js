@@ -7,8 +7,6 @@ let isSelecting = false; // Flag để biết đang trong quá trình select
 let popupJustCreated = false; // Flag để biết popup vừa mới được tạo
 let selectedRange = null; // Lưu range của text được chọn
 
-
-
 // Hàm kiểm tra xem text có phải tiếng Nhật không
 function isJapanese(text) {
   // Kiểm tra các ký tự Hiragana, Katakana, và Kanji
@@ -41,7 +39,7 @@ function updatePopupPosition() {
 
     // Tính toán vị trí (ưu tiên hiển thị bên phải text)
     let left = rect.right + 5; // Bên phải text 5px
-    let top = rect.top;        // Căn top với text
+    let top = rect.top; // Căn top với text
 
     // 1. Xử lý vị trí ngang (Horizontal)
     // Kiểm tra xem có đủ chỗ bên phải trong viewport không
@@ -103,15 +101,17 @@ function createTranslationPopup(range, text) {
 
   translationPopup.innerHTML = `
     <div class="jp-translator-content">
-      <div class="jp-translator-loading">${isSentence ? "Đang dịch câu..." : "Đang tra từ..."}</div>
+      <div class="jp-translator-loading">${
+        isSentence ? "Đang dịch câu..." : "Đang tra từ..."
+      }</div>
     </div>
   `;
 
   document.body.appendChild(translationPopup);
 
   // Thêm event listener cho resize và scroll để cập nhật vị trí
-  window.addEventListener('resize', updatePopupPosition);
-  window.addEventListener('scroll', updatePopupPosition);
+  window.addEventListener("resize", updatePopupPosition);
+  window.addEventListener("scroll", updatePopupPosition);
 
   // Đợi popup render xong rồi mới tính toán vị trí
   updatePopupPosition();
@@ -129,13 +129,16 @@ function createTranslationPopup(range, text) {
 // Hàm gọi API backend để dịch
 async function translateText(text) {
   try {
-    const response = await fetch("https://jp-extension.vercel.app/api/translate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text: text }),
-    });
+    const response = await fetch(
+      "https://jp-extension.vercel.app/api/translate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: text }),
+      }
+    );
 
     const data = await response.json();
 
@@ -145,7 +148,8 @@ async function translateText(text) {
         data.hiragana,
         data.original,
         data.examples || [], // Thêm examples
-        data.source // Thêm source
+        data.source, // Thêm source
+        data.english || "" // Thêm nghĩa tiếng Anh
       );
     } else {
       displayError(data.error || "Lỗi khi dịch");
@@ -159,14 +163,22 @@ async function translateText(text) {
 }
 
 // Hàm hiển thị kết quả dịch
-function displayTranslation(translation, hiragana, original, examples = [], source = "") {
+function displayTranslation(
+  translation,
+  hiragana,
+  original,
+  examples = [],
+  source = "",
+  english = ""
+) {
   if (!translationPopup) return;
 
   // Kiểm tra mode hiện tại của popup
   const isSentenceMode = translationPopup.classList.contains("sentence-mode");
 
   // Kiểm tra thêm source từ backend để chắc chắn
-  const isGoogleTranslate = source === "google" || (examples.length === 0 && !hiragana);
+  const isGoogleTranslate =
+    source === "google" || (examples.length === 0 && !hiragana);
 
   let contentHTML = "";
 
@@ -185,34 +197,58 @@ function displayTranslation(translation, hiragana, original, examples = [], sour
   } else {
     // CHẾ ĐỘ TRA TỪ: Hiển thị đầy đủ
 
-    // Tạo HTML cho ví dụ
+    // Tạo HTML cho ví dụ (chỉ hiển thị 1 ví dụ đầu tiên)
     let examplesHTML = "";
     if (examples && examples.length > 0) {
-      examplesHTML = '<div class="jp-translator-examples-title">📝 Ví dụ:</div>';
-      examples.forEach((example) => {
-        const jpWithFurigana = example.html || example.japanese;
-        examplesHTML += `
-          <div class="jp-translator-example">
-            <div class="jp-translator-example-jp">${jpWithFurigana}</div>
-            ${example.vietnamese
-            ? `<div class="jp-translator-example-vi">${example.vietnamese}</div>`
-            : ""
+      const example = examples[0]; // Chỉ lấy ví dụ đầu tiên
+      const jpWithFurigana = example.html || example.japanese;
+      examplesHTML = `
+        <div class="jp-translator-examples-title">Ví dụ</div>
+        <div class="jp-translator-example">
+          <div class="jp-translator-example-jp">${jpWithFurigana}</div>
+          ${
+            example.vietnamese
+              ? `<div class="jp-translator-example-vi">${example.vietnamese}</div>`
+              : ""
           }
-          </div>
-        `;
-      });
+        </div>
+      `;
+    }
+
+    // Tạo HTML cho hiragana với ghi chú
+    let hiraganaHTML = "";
+    if (hiragana) {
+      hiraganaHTML = `
+        <div class="jp-translator-hiragana">${hiragana}</div>
+        ${
+          english
+            ? `<div class="jp-translator-hiragana-note">${english}</div>`
+            : ""
+        }
+      `;
     }
 
     contentHTML = `
-        <div class="jp-translator-original">${original}</div>
-        ${hiragana ? `<div class="jp-translator-hiragana">${hiragana}</div>` : ""}
-        <div class="jp-translator-translation">${translation}</div>
-        ${examplesHTML}
+        <div class="jp-translator-word-section">
+          <div class="jp-translator-word-left">
+            <div class="jp-translator-original">${original}</div>
+            ${hiraganaHTML}
+          </div>
+          <div class="jp-translator-word-right">
+            <div class="jp-translator-translation"><span class="jp-translator-translation-label">Nghĩa:</span> ${translation}</div>
+          </div>
+        </div>
+        ${
+          examplesHTML
+            ? `<div class="jp-translator-examples-container">${examplesHTML}</div>`
+            : ""
+        }
         <button class="jp-translator-close">×</button>
       `;
   }
 
-  translationPopup.querySelector(".jp-translator-content").innerHTML = contentHTML;
+  translationPopup.querySelector(".jp-translator-content").innerHTML =
+    contentHTML;
 
   // Cập nhật lại vị trí sau khi content thay đổi (có thể thay đổi kích thước)
   // Đợi một chút để DOM render xong
@@ -225,8 +261,8 @@ function displayTranslation(translation, hiragana, original, examples = [], sour
   closeBtn.addEventListener("click", (e) => {
     e.stopPropagation(); // Ngăn event bubble lên document
     if (translationPopup) {
-      window.removeEventListener('resize', updatePopupPosition);
-      window.removeEventListener('scroll', updatePopupPosition);
+      window.removeEventListener("resize", updatePopupPosition);
+      window.removeEventListener("scroll", updatePopupPosition);
       translationPopup.remove();
       translationPopup = null;
       selectedRange = null;
@@ -252,8 +288,8 @@ function displayError(errorMessage) {
   closeBtn.addEventListener("click", (e) => {
     e.stopPropagation(); // Ngăn event bubble lên document
     if (translationPopup) {
-      window.removeEventListener('resize', updatePopupPosition);
-      window.removeEventListener('scroll', updatePopupPosition);
+      window.removeEventListener("resize", updatePopupPosition);
+      window.removeEventListener("scroll", updatePopupPosition);
       translationPopup.remove();
       translationPopup = null;
       selectedRange = null;
@@ -320,8 +356,8 @@ document.addEventListener("click", function (e) {
     translationPopup &&
     !translationPopup.contains(e.target)
   ) {
-    window.removeEventListener('resize', updatePopupPosition);
-    window.removeEventListener('scroll', updatePopupPosition);
+    window.removeEventListener("resize", updatePopupPosition);
+    window.removeEventListener("scroll", updatePopupPosition);
     translationPopup.remove();
     translationPopup = null;
     selectedRange = null;
