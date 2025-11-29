@@ -14,8 +14,8 @@ async function init() {
 
     try {
         console.log("Đang khởi tạo Kuroshiro...");
-        // Trỏ đến thư mục dict ở root project
-        const dictPath = path.join(__dirname, '..', '..', 'dict');
+        // Trỏ đến thư mục dict trong public (Source of truth)
+        const dictPath = path.join(__dirname, '..', '..', 'public', 'dict');
 
         await kuroshiro.init(new KuromojiAnalyzer({
             dictPath: dictPath

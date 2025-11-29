@@ -99,14 +99,8 @@ function copyPublicFiles(sourceDir, targetDir) {
                         path.join(targetDir, iconFile)
                     );
                 }
-            } else if (entry === 'dict') {
-                // Copy dict folder
-                const dictDest = path.join(targetDir, entry);
-                if (fs.existsSync(dictDest)) {
-                    fs.rmSync(dictDest, { recursive: true, force: true });
-                }
-                copyRecursive(sourcePath, dictDest);
             }
+            // KHÔNG copy dict folder nữa vì server dùng trực tiếp từ public/dict
         }
     }
 }
