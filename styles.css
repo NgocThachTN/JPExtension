@@ -51,16 +51,20 @@
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid #e8e8e8;
+  overflow: hidden;
 }
 
 .jp-translator-word-left {
   flex: 0 0 auto;
   min-width: 100px;
+  max-width: 180px;
+  overflow: hidden;
 }
 
 .jp-translator-word-right {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .jp-translator-original {
@@ -94,6 +98,10 @@
   padding-left: 6px;
   font-style: italic;
   opacity: 0.8;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+  max-width: 100%;
 }
 
 .jp-translator-translation {
