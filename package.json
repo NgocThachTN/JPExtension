@@ -2,10 +2,14 @@
   "name": "japanese-vietnamese-translator",
   "version": "1.0.0",
   "description": "Chrome Extension dịch tiếng Nhật sang tiếng Việt với hiragana",
-  "main": "server.js",
+  "main": "server/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "build": "node scripts/build.js",
+    "clean": "node -e \"const fs=require('fs');['background.js','content.js','manifest.json','popup.html','popup.js','styles.css','icon16.png','icon48.png','icon128.png'].forEach(f=>{try{fs.unlinkSync(f)}catch(e){}})\"",
+    "rebuild": "npm run clean && npm run build",
+    "watch": "nodemon --watch src --watch public --exec npm run build"
   },
   "keywords": [
     "chrome-extension",

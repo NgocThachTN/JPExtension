@@ -43,11 +43,18 @@ Project sử dụng các package Node.js sau:
 
 Backend server đã được deploy lên Vercel và sẵn sàng sử dụng. Bạn có thể sử dụng extension trực tiếp mà không cần chạy server local.
 
-1. Cài đặt Extension vào Chrome:
+1. Build Extension:
+
+```bash
+npm install
+npm run build
+```
+
+2. Cài đặt Extension vào Chrome:
    - Mở Chrome và truy cập `chrome://extensions/`
    - Bật chế độ Developer mode ở góc trên bên phải
-   - Nhấp vào nút Load unpacked
-   - Chọn thư mục chứa file `manifest.json`
+   - Nhấp vào nút "Load unpacked"
+   - Chọn thư mục gốc `JPExtension/` (thư mục chứa `manifest.json`)
    - Extension đã sẵn sàng sử dụng
 
 ### Phương án 2: Chạy Backend local (Cho phát triển)
@@ -66,13 +73,13 @@ npm install
 npm start
 ```
 
-Server sẽ chạy tại `http://localhost:3000`. Nếu port 3000 bị chiếm, có thể thay đổi biến môi trường `PORT` hoặc sửa trong `server.js`.
+Server sẽ chạy tại `http://localhost:3000`. Nếu port 3000 bị chiếm, có thể thay đổi biến môi trường `PORT` hoặc sửa trong `server/server.js`.
 
-3. Cập nhật API endpoint trong `content.js`:
+3. Cập nhật API endpoint trong `src/content.js`:
 
 Thay đổi URL từ `https://jp-extension.vercel.app/api/translate` sang `http://localhost:3000/api/translate`
 
-4. Cài đặt Extension vào Chrome (theo hướng dẫn ở Phương án 1)
+4. Build và cài đặt Extension (theo hướng dẫn ở Phương án 1)
 
 ## Cách sử dụng
 
@@ -96,19 +103,61 @@ Extension tự động phân biệt giữa hai chế độ:
 
 ```
 JPExtension/
-├── manifest.json              # Cấu hình Chrome extension
-├── content.js                 # Script chạy trên web pages, xử lý selection và popup
-├── popup.html                 # Giao diện popup extension (kiểm tra kết nối server)
-├── popup.js                   # Logic cho popup extension
-├── background.js              # Service worker cho extension
-├── styles.css                 # CSS cho popup translation
-├── server.js                  # Backend Node.js server với Jisho API integration
+├── src/                       # Source code của Extension
+│   ├── background.js          # Service worker cho extension
+│   ├── content.js             # Script chạy trên web pages, xử lý selection và popup
+│   ├── manifest.json          # Cấu hình Chrome extension
+│   ├── popup/                 # Extension popup
+│   │   ├── popup.html         # Giao diện popup extension (kiểm tra kết nối server)
+│   │   └── popup.js           # Logic cho popup extension
+│   └── styles/
+│       └── content.css        # CSS cho popup translation
+├── server/                    # Backend Server
+│   └── server.js              # Backend Node.js server với Jisho API integration
+├── public/                    # Assets tĩnh
+│   ├── icons/                 # Icons cho extension
+│   │   ├── icon16.png
+│   │   ├── icon48.png
+│   │   └── icon128.png
+│   └── dict/                  # Dictionary files cho Kuromoji analyzer
+├── scripts/                   # Build và utility scripts
+│   └── build.js               # Script build extension
 ├── health.html                # Trang health check cho server
 ├── package.json               # Dependencies và scripts
-├── package-lock.json          # Lock file cho dependencies
-├── dict/                      # Dictionary files cho Kuromoji analyzer
-└── README.md                  # Tài liệu này
+├── README.md                  # Tài liệu này
+│
+├── [Generated files khi build - gitignored]
+├── background.js              # Built from src/
+├── content.js                 # Built from src/
+├── manifest.json              # Built from src/
+├── popup.html                 # Built from src/popup/
+├── popup.js                   # Built from src/popup/
+├── styles.css                 # Built from src/styles/content.css
+├── icon16.png                 # Copied from public/icons/
+├── icon48.png                 # Copied from public/icons/
+├── icon128.png                # Copied from public/icons/
+└── dict/                      # Copied from public/dict/
 ```
+
+**Lưu ý**: Các file ở root (background.js, content.js, v.v.) được tạo tự động khi chạy `npm run build` và được gitignore.
+
+## Build Extension
+
+Để build extension từ source code:
+
+```bash
+npm run build
+```
+
+Extension sẽ được build vào **thư mục gốc** (root folder). Các file extension sẽ xuất hiện cùng cấp với `package.json`.
+
+### Build Scripts
+
+- `npm run build`: Build extension từ src/ và public/ ra root folder
+- `npm run clean`: Xóa các file extension đã build ở root
+- `npm run rebuild`: Clean + build lại
+- `npm run watch`: Tự động build khi có thay đổi (cần cài nodemon)
+
 
 ## API Endpoints
 

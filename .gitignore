@@ -3,3 +3,15 @@ node_modules/
 *.log
 .env
 
+# Extension build artifacts (built from src/)
+/background.js
+/content.js
+/manifest.json
+/popup.html
+/popup.js
+/styles.css
+/icon16.png
+/icon48.png
+/icon128.png
+/dict/
+
