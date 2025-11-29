@@ -2,7 +2,8 @@
 
 Extension Chrome để dịch tiếng Nhật sang tiếng Việt và hiển thị hiragana khi bôi đen text.
 
-<img width="1006" height="647" alt="image" src="https://github.com/user-attachments/assets/723c6f10-20a3-4ab8-90ec-49f882b54672" />
+<img width="1003" height="753" alt="image" src="https://github.com/user-attachments/assets/37bf0b05-881a-49a1-b815-64852601554e" />
+
 
 
 **Lưu ý:** Backend server hiện đã được deploy lên vercel. Bạn có thể sử dụng extension trực tiếp mà không cần phải chạy localhost, tuy nhiên việc chạy localhost vẫn được hỗ trợ cho mục đích phát triển tùy vào mục đích cá nhân của bạn. 
