@@ -33,41 +33,62 @@ function updatePopupPosition() {
     const popupWidth = popupRect.width;
     const popupHeight = popupRect.height;
 
-    // Viewport dimensions
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // Sử dụng Visual Viewport API để xử lý zoom chính xác
+    // Fallback về window.innerWidth/Height nếu Visual Viewport không có
+    const viewport = window.visualViewport || {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      offsetLeft: 0,
+      offsetTop: 0,
+      scale: 1
+    };
 
-    // Tính toán vị trí (ưu tiên hiển thị bên phải text)
-    let left = rect.right + 5; // Bên phải text 5px
+    const viewportWidth = viewport.width;
+    const viewportHeight = viewport.height;
+    const viewportOffsetLeft = viewport.offsetLeft || 0;
+    const viewportOffsetTop = viewport.offsetTop || 0;
+
+    // Margin an toàn từ mép màn hình
+    const SAFE_MARGIN = 15;
+
+    // Tính toán vị trí (LUÔN LUÔN hiển thị bên phải text)
+    let left = rect.right + 8; // Bên phải text 8px
     let top = rect.top; // Căn top với text
 
-    // 1. Xử lý vị trí ngang (Horizontal)
-    // Kiểm tra xem có đủ chỗ bên phải trong viewport không
-    if (left + popupWidth > viewportWidth - 10) {
-      // Nếu không đủ chỗ bên phải, chuyển sang bên trái
-      left = rect.left - popupWidth - 10;
-    }
+    // 1. Xử lý vị trí ngang (Horizontal) - LUÔN Ở BÊN PHẢI
+    // Kiểm tra xem popup có bị tràn ra ngoài mép phải viewport không
+    const rightEdge = left + popupWidth - viewportOffsetLeft;
 
-    // Nếu vẫn bị tràn ra bên trái màn hình
-    if (left < 10) {
-      left = 10;
-    }
+    if (rightEdge > viewportWidth - SAFE_MARGIN) {
+      // Nếu tràn ra ngoài mép phải, điều chỉnh left về sát mép phải
+      // NHƯNG VẪN GIỮ BÊN PHẢI TEXT (không chuyển sang trái)
+      left = viewportOffsetLeft + viewportWidth - popupWidth - SAFE_MARGIN;
 
-    // 2. Xử lý vị trí dọc (Vertical)
-    // Nếu popup bị tràn xuống dưới màn hình
-    if (top + popupHeight > viewportHeight - 10) {
-      // Đẩy lên trên
-      top = rect.bottom - popupHeight;
-
-      // Nếu vẫn thấp hơn viewport bottom (do text cao), căn theo viewport bottom
-      if (top + popupHeight > viewportHeight) {
-        top = viewportHeight - popupHeight - 10;
+      // Đảm bảo popup vẫn ở bên phải text, ít nhất một phần
+      // Nếu left nhỏ hơn vị trí text, thì giữ ở ngay bên phải text
+      if (left < rect.right) {
+        left = rect.right + 8;
       }
     }
 
-    // Nếu popup bị tràn lên trên màn hình
-    if (top < 10) {
-      top = 10;
+    // 2. Xử lý vị trí dọc (Vertical)
+    const bottomEdge = top + popupHeight - viewportOffsetTop;
+
+    // Nếu popup bị tràn xuống dưới màn hình
+    if (bottomEdge > viewportHeight - SAFE_MARGIN) {
+      // Đẩy lên trên text
+      top = rect.top - popupHeight - 8;
+
+      // Nếu vẫn bị tràn lên trên
+      if (top - viewportOffsetTop < SAFE_MARGIN) {
+        // Căn theo viewport bottom
+        top = viewportOffsetTop + viewportHeight - popupHeight - SAFE_MARGIN;
+      }
+    }
+
+    // Đảm bảo popup không vượt quá mép trên (final check)
+    if (top < viewportOffsetTop + SAFE_MARGIN) {
+      top = viewportOffsetTop + SAFE_MARGIN;
     }
 
     // Áp dụng vị trí FIXED
@@ -78,6 +99,7 @@ function updatePopupPosition() {
     translationPopup.style.bottom = "auto";
   }, 0);
 }
+
 function createTranslationPopup(range, text) {
   // Xóa popup cũ nếu có
   if (translationPopup) {
@@ -101,9 +123,8 @@ function createTranslationPopup(range, text) {
 
   translationPopup.innerHTML = `
     <div class="jp-translator-content">
-      <div class="jp-translator-loading">${
-        isSentence ? "Đang dịch câu..." : "Đang tra từ..."
-      }</div>
+      <div class="jp-translator-loading">${isSentence ? "Đang dịch câu..." : "Đang tra từ..."
+    }</div>
     </div>
   `;
 
@@ -112,6 +133,12 @@ function createTranslationPopup(range, text) {
   // Thêm event listener cho resize và scroll để cập nhật vị trí
   window.addEventListener("resize", updatePopupPosition);
   window.addEventListener("scroll", updatePopupPosition);
+
+  // Thêm event listener cho visualViewport để xử lý zoom
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", updatePopupPosition);
+    window.visualViewport.addEventListener("scroll", updatePopupPosition);
+  }
 
   // Đợi popup render xong rồi mới tính toán vị trí
   updatePopupPosition();
@@ -206,11 +233,10 @@ function displayTranslation(
         <div class="jp-translator-examples-title">Ví dụ</div>
         <div class="jp-translator-example">
           <div class="jp-translator-example-jp">${jpWithFurigana}</div>
-          ${
-            example.vietnamese
-              ? `<div class="jp-translator-example-vi">${example.vietnamese}</div>`
-              : ""
-          }
+          ${example.vietnamese
+          ? `<div class="jp-translator-example-vi">${example.vietnamese}</div>`
+          : ""
+        }
         </div>
       `;
     }
@@ -220,10 +246,9 @@ function displayTranslation(
     if (hiragana) {
       hiraganaHTML = `
         <div class="jp-translator-hiragana">${hiragana}</div>
-        ${
-          english
-            ? `<div class="jp-translator-hiragana-note">${english}</div>`
-            : ""
+        ${english
+          ? `<div class="jp-translator-hiragana-note">${english}</div>`
+          : ""
         }
       `;
     }
@@ -238,11 +263,10 @@ function displayTranslation(
             <div class="jp-translator-translation"><span class="jp-translator-translation-label">Nghĩa:</span> ${translation}</div>
           </div>
         </div>
-        ${
-          examplesHTML
-            ? `<div class="jp-translator-examples-container">${examplesHTML}</div>`
-            : ""
-        }
+        ${examplesHTML
+        ? `<div class="jp-translator-examples-container">${examplesHTML}</div>`
+        : ""
+      }
         <button class="jp-translator-close">×</button>
       `;
   }
@@ -263,6 +287,10 @@ function displayTranslation(
     if (translationPopup) {
       window.removeEventListener("resize", updatePopupPosition);
       window.removeEventListener("scroll", updatePopupPosition);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", updatePopupPosition);
+        window.visualViewport.removeEventListener("scroll", updatePopupPosition);
+      }
       translationPopup.remove();
       translationPopup = null;
       selectedRange = null;
@@ -290,6 +318,10 @@ function displayError(errorMessage) {
     if (translationPopup) {
       window.removeEventListener("resize", updatePopupPosition);
       window.removeEventListener("scroll", updatePopupPosition);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", updatePopupPosition);
+        window.visualViewport.removeEventListener("scroll", updatePopupPosition);
+      }
       translationPopup.remove();
       translationPopup = null;
       selectedRange = null;
@@ -358,6 +390,10 @@ document.addEventListener("click", function (e) {
   ) {
     window.removeEventListener("resize", updatePopupPosition);
     window.removeEventListener("scroll", updatePopupPosition);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener("resize", updatePopupPosition);
+      window.visualViewport.removeEventListener("scroll", updatePopupPosition);
+    }
     translationPopup.remove();
     translationPopup = null;
     selectedRange = null;
