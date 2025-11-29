@@ -2,6 +2,9 @@
 
 Chrome Extension để dịch tiếng Nhật sang tiếng Việt với hỗ trợ hiển thị hiragana, furigana và ví dụ sử dụng từ vựng.
 
+<img width="1141" height="737" alt="image" src="https://github.com/user-attachments/assets/f303159b-9a07-41c2-9860-6a31e30c6ed1" />
+
+
 ## Tổng quan
 
 JP Extension là một công cụ dịch thuật tiếng Nhật chuyên nghiệp, tích hợp với Jisho.org API để cung cấp bản dịch chính xác, hiragana, nghĩa tiếng Anh và ví dụ sử dụng từ vựng. Extension tự động phát hiện khi người dùng chọn text tiếng Nhật trên trang web và hiển thị popup dịch với giao diện gọn gàng, thân thiện.
