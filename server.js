@@ -368,11 +368,7 @@ async function translateJapanese(text) {
 
 // API Health Check
 app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "Server đang hoạt động!",
-    timestamp: new Date().toISOString(),
-  });
+  res.sendFile(path.join(__dirname, 'health.html'));
 });
 
 // API Translate
