@@ -23,7 +23,7 @@ let kuroshiroInitialized = false;
   try {
     console.log("Starting Kuroshiro initialization...");
     await kuroshiro.init(new KuromojiAnalyzer({
-      dictPath: path.join(__dirname, "dict")
+      dictPath: path.join(__dirname, '..', 'dict')
     }));
     kuroshiroInitialized = true;
     console.log("Kuroshiro initialized successfully");
@@ -368,7 +368,7 @@ async function translateJapanese(text) {
 
 // API Health Check
 app.get("/api/health", (req, res) => {
-  res.sendFile(path.join(__dirname, 'health.html'));
+  res.sendFile(path.join(__dirname, '..', 'health.html'));
 });
 
 // API Translate
