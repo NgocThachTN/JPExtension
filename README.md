@@ -1,131 +1,186 @@
-# Extension dịch từ vựng Tiếng Nhật Sang Tiếng Việt - JPExtension
+# JP Extension - Japanese to Vietnamese Translator
 
-Extension Chrome để dịch tiếng Nhật sang tiếng Việt và hiển thị hiragana khi bôi đen text.
+Chrome Extension để dịch tiếng Nhật sang tiếng Việt với hỗ trợ hiển thị hiragana, furigana và ví dụ sử dụng từ vựng.
 
-<img width="1006" height="647" alt="image" src="https://github.com/user-attachments/assets/723c6f10-20a3-4ab8-90ec-49f882b54672" />
+## Tổng quan
 
+JP Extension là một công cụ dịch thuật tiếng Nhật chuyên nghiệp, tích hợp với Jisho.org API để cung cấp bản dịch chính xác, hiragana, nghĩa tiếng Anh và ví dụ sử dụng từ vựng. Extension tự động phát hiện khi người dùng chọn text tiếng Nhật trên trang web và hiển thị popup dịch với giao diện gọn gàng, thân thiện.
 
-**Lưu ý:** Backend server hiện đã được deploy lên vercel. Bạn có thể sử dụng extension trực tiếp mà không cần phải chạy localhost, tuy nhiên việc chạy localhost vẫn được hỗ trợ cho mục đích phát triển tùy vào mục đích cá nhân của bạn. 
-## Yêu cầu
+## Tính năng
 
-- Node.js (phiên bản 14 trở lên)
+- Dịch tự động từ tiếng Nhật sang tiếng Việt
+- Hiển thị hiragana và nghĩa tiếng Anh cho từ vựng
+- Furigana tự động cho Kanji trong ví dụ
+- Ví dụ sử dụng từ vựng trong câu
+- Giao diện popup gọn gàng, ưu tiên layout ngang
+- Tự động định vị popup thông minh
+- Hỗ trợ cả từ vựng đơn và câu dài
+
+## Yêu cầu hệ thống
+
+- Node.js phiên bản 18.0.0 trở lên
 - Google Chrome hoặc trình duyệt Chromium
 - npm (đi kèm với Node.js)
 
 ## Dependencies
 
-Project sử dụng các package Node.js sau (tự động cài đặt với `npm install`):
+Project sử dụng các package Node.js sau:
 
 - `express`: Framework web server
 - `cors`: Cho phép cross-origin requests
-- `japanese`: Xử lý text tiếng Nhật (tùy chọn, cho tính năng nâng cao)
+- `kuroshiro`: Xử lý chuyển đổi và phân tích text tiếng Nhật
+- `kuroshiro-analyzer-kuromoji`: Analyzer cho Kuroshiro
+- `unofficial-jisho-api`: Client cho Jisho.org API
+- `japanese`: Xử lý text tiếng Nhật
+- `canvas`: Hỗ trợ rendering (cho một số tính năng nâng cao)
 
 ## Cài đặt
 
-### Bước 1: Cài đặt dependencies
+### Phương án 1: Sử dụng Backend đã deploy (Khuyến nghị)
 
-Mở terminal trong thư mục project và chạy:
+Backend server đã được deploy lên Vercel và sẵn sàng sử dụng. Bạn có thể sử dụng extension trực tiếp mà không cần chạy server local.
+
+1. Cài đặt Extension vào Chrome:
+   - Mở Chrome và truy cập `chrome://extensions/`
+   - Bật chế độ Developer mode ở góc trên bên phải
+   - Nhấp vào nút Load unpacked
+   - Chọn thư mục chứa file `manifest.json`
+   - Extension đã sẵn sàng sử dụng
+
+### Phương án 2: Chạy Backend local (Cho phát triển)
+
+Nếu muốn chạy backend server trên máy local:
+
+1. Cài đặt dependencies:
 
 ```bash
 npm install
 ```
 
-Nếu gặp lỗi với package nào đó, có thể bỏ qua hoặc cài riêng:
-
-```bash
-npm install express cors
-# npm install japanese  # Tùy chọn cho xử lý Furigana
-```
-
-### Bước 2: Khởi động Backend Server
+2. Khởi động Backend Server:
 
 ```bash
 npm start
 ```
 
-Server sẽ chạy tại `http://localhost:3000`. Nếu port 3000 bị chiếm, sửa trong `server.js`.
+Server sẽ chạy tại `http://localhost:3000`. Nếu port 3000 bị chiếm, có thể thay đổi biến môi trường `PORT` hoặc sửa trong `server.js`.
 
-### Bước 3: Cài đặt Extension vào Chrome
+3. Cập nhật API endpoint trong `content.js`:
 
-1.  Mở Chrome và truy cập `chrome://extensions/`
-2.  Bật chế độ **Developer mode** (Chế độ nhà phát triển) ở góc trên bên phải.
-3.  Nhấp vào nút **Load unpacked** (Tải tiện ích đã giải nén).
-4.  Chọn thư mục `JPExtension` (thư mục chứa file `manifest.json`).
-5.  Extension đã được cài đặt và sẵn sàng sử dụng!
+Thay đổi URL từ `https://jp-extension.vercel.app/api/translate` sang `http://localhost:3000/api/translate`
+
+4. Cài đặt Extension vào Chrome (theo hướng dẫn ở Phương án 1)
 
 ## Cách sử dụng
 
-1.  Đảm bảo server đang chạy (`npm start`)
-2.  Mở bất kỳ trang web nào có text tiếng Nhật
-3.  **Bôi đen** (chọn) text tiếng Nhật
-4.  Popup sẽ tự động hiển thị:
-    -   Text gốc (tiếng Nhật)
-    -   Hiragana của từ đó
-    -   Bản dịch tiếng Việt
-    -   **Ví dụ sử dụng** (nếu có, với Furigana ở trên Kanji)
+1. Mở bất kỳ trang web nào có text tiếng Nhật
+2. Bôi đen (chọn) text tiếng Nhật mà bạn muốn dịch
+3. Popup sẽ tự động hiển thị với các thông tin:
+   - Text gốc (tiếng Nhật)
+   - Hiragana của từ đó
+   - Nghĩa tiếng Anh (ghi chú)
+   - Bản dịch tiếng Việt
+   - Ví dụ sử dụng từ (nếu có, với Furigana ở trên Kanji)
 
-### Tính năng đặc biệt
+### Chế độ hoạt động
 
--   **Furigana**: Hiển thị Hiragana ở trên Kanji để dễ đọc
--   **Ví dụ**: Popup có thể hiển thị các ví dụ câu sử dụng từ, với Furigana
--   **Vị trí thông minh**: Popup tự động định vị bên phải text, điều chỉnh khi scroll
--   **Ẩn thanh scroll**: Popup scroll mượt mà mà không hiển thị thanh cuộn
+Extension tự động phân biệt giữa hai chế độ:
+
+- **Chế độ tra từ**: Khi chọn text ngắn (≤ 20 ký tự), extension sẽ tra từ điển Jisho và hiển thị đầy đủ thông tin bao gồm hiragana, nghĩa tiếng Anh, nghĩa tiếng Việt và ví dụ
+- **Chế độ dịch câu**: Khi chọn text dài (> 20 ký tự), extension sẽ sử dụng Google Translate để dịch toàn bộ câu
 
 ## Cấu trúc Project
 
 ```
 JPExtension/
-├── manifest.json          # Cấu hình Chrome extension
-├── content.js            # Script chạy trên web pages
-├── popup.html            # Giao diện popup extension
-├── popup.js              # Logic popup
-├── background.js         # Service worker
-├── styles.css            # CSS cho popup translation
-├── server.js             # Backend Node.js server
-├── package.json          # Dependencies
-└── README.md             # Hướng dẫn này
+├── manifest.json              # Cấu hình Chrome extension
+├── content.js                 # Script chạy trên web pages, xử lý selection và popup
+├── popup.html                 # Giao diện popup extension (kiểm tra kết nối server)
+├── popup.js                   # Logic cho popup extension
+├── background.js              # Service worker cho extension
+├── styles.css                 # CSS cho popup translation
+├── server.js                  # Backend Node.js server với Jisho API integration
+├── health.html                # Trang health check cho server
+├── package.json               # Dependencies và scripts
+├── package-lock.json          # Lock file cho dependencies
+├── dict/                      # Dictionary files cho Kuromoji analyzer
+└── README.md                  # Tài liệu này
 ```
 
-## Mở rộng Dictionary
+## API Endpoints
 
-Để thêm từ mới vào từ điển, mở file `server.js` và thêm vào object `dictionary`:
+Backend server cung cấp các endpoints sau:
 
-```javascript
-const dictionary = {
-  '新しい単語': { translation: 'Nghĩa tiếng Việt', hiragana: 'あたらしいたんご' },
-  // Thêm từ mới ở đây...
-};
-```
+- `POST /api/translate`: Dịch text tiếng Nhật sang tiếng Việt
 
-## Tích hợp API Dịch Thật (Tùy chọn)
+  - Body: `{ "text": "日本語のテキスト" }`
+  - Response: `{ "success": true, "original": "...", "hiragana": "...", "translation": "...", "english": "...", "examples": [...] }`
 
-Hiện tại extension sử dụng dictionary đơn giản. Để dịch chính xác hơn, bạn có thể tích hợp:
+- `GET /api/health`: Kiểm tra trạng thái server
+  - Response: HTML page hiển thị trạng thái server
 
--   **Google Translate API**
--   **Jisho.org API** (từ điển tiếng Nhật miễn phí)
--   **MyMemory Translation API**
+## Tích hợp API
 
-Ví dụ với Jisho API:
+Extension đã tích hợp sẵn các API sau:
 
-```javascript
-// Trong server.js, thay thế phần translate
-const response = await fetch(`https://jisho.org/api/v1/search/words?keyword=${text}`);
-const data = await response.json();
-// Xử lý data...
-```
+- **Jisho.org API**: Tra từ điển tiếng Nhật, lấy nghĩa, hiragana và ví dụ
+- **Google Translate API**: Dịch câu dài và các từ không tìm thấy trong Jisho
+- **Kuroshiro**: Xử lý chuyển đổi text tiếng Nhật và tạo Furigana
 
 ## Xử lý lỗi
 
--   **Không thể kết nối server**: Đảm bảo đã chạy `npm start`
--   **Popup không hiển thị**: Kiểm tra console (F12) để xem lỗi
--   **Dịch không chính xác**: Thêm từ vào dictionary hoặc tích hợp API dịch
+### Không thể kết nối server
+
+- Nếu sử dụng backend đã deploy: Kiểm tra kết nối internet và đảm bảo URL API đúng
+- Nếu chạy local: Đảm bảo đã chạy `npm start` và server đang chạy tại `http://localhost:3000`
+
+### Popup không hiển thị
+
+- Mở Developer Tools (F12) và kiểm tra Console để xem lỗi
+- Đảm bảo text được chọn có chứa ký tự tiếng Nhật (Hiragana, Katakana, hoặc Kanji)
+- Kiểm tra xem extension đã được bật trong `chrome://extensions/`
+
+### Dịch không chính xác hoặc không có kết quả
+
+- Extension sử dụng Jisho.org API, nếu từ không có trong từ điển sẽ fallback sang Google Translate
+- Đối với câu dài, extension tự động sử dụng Google Translate
+- Kiểm tra console để xem log chi tiết
+
+### Lỗi khi khởi động server
+
+- Đảm bảo Node.js phiên bản 18.0.0 trở lên
+- Chạy `npm install` để cài đặt đầy đủ dependencies
+- Kiểm tra xem thư mục `dict/` có đầy đủ files không
+
+## Phát triển
+
+### Chạy ở chế độ development
+
+```bash
+npm run dev
+```
+
+### Cấu hình môi trường
+
+Có thể cấu hình port server thông qua biến môi trường:
+
+```bash
+PORT=3000 npm start
+```
+
+### Testing
+
+1. Mở trang web có text tiếng Nhật (ví dụ: https://www3.nhk.or.jp/news/easy/)
+2. Chọn text tiếng Nhật
+3. Kiểm tra popup hiển thị đúng
 
 ## Lưu ý
 
--   Extension chỉ hoạt động khi server đang chạy
--   Dictionary hiện tại có số lượng từ hạn chế
--   Để sử dụng production, nên tích hợp API dịch thật
+- Extension hoạt động độc lập với backend đã deploy, không cần chạy server local
+- Backend sử dụng Jisho.org API miễn phí, có giới hạn rate limit
+- Furigana được tạo tự động bằng Kuroshiro, có thể mất thời gian khởi tạo lần đầu
+- Extension chỉ hoạt động trên các trang web cho phép content scripts
 
 ## License
 
-MIT
+MIT License
