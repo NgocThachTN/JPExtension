@@ -1,9 +1,47 @@
 const jishoService = require("./jishoService");
 const googleTranslateService = require("./googleTranslateService");
 const kuroshiroService = require("./kuroshiroService");
+const fs = require('fs');
+const path = require('path');
 
 // Cache lưu kết quả để tăng tốc độ
 const dictionaryCache = {};
+
+// Load Han Viet dictionary
+let hanVietDict = {};
+try {
+    const dictPath = path.join(__dirname, '../../public/dict/hanviet.json');
+    if (fs.existsSync(dictPath)) {
+        const rawData = fs.readFileSync(dictPath);
+        hanVietDict = JSON.parse(rawData);
+        console.log(`Đã load từ điển Hán Việt: ${Object.keys(hanVietDict).length} từ`);
+    } else {
+        console.warn("Không tìm thấy từ điển Hán Việt tại:", dictPath);
+    }
+} catch (e) {
+    console.error("Lỗi load từ điển Hán Việt:", e);
+}
+
+/**
+ * Helper: Làm sạch chuỗi Hán Việt
+ * Input: "['thướng'], ['thượng']" hoặc "['ngoan']"
+ * Output: "Thướng, thượng" hoặc "Ngoan"
+ */
+function cleanHanViet(str) {
+    if (!str) return "";
+
+    // Regex để lấy nội dung trong dấu '...'
+    const matches = [...str.matchAll(/'([^']+)'/g)];
+    const words = matches.map(m => m[1]);
+
+    if (words.length === 0) return str; // Fallback nếu không match
+
+    // Join lại thành chuỗi
+    const joined = words.join(", ");
+
+    // Viết hoa chữ cái đầu tiên
+    return joined.charAt(0).toUpperCase() + joined.slice(1);
+}
 
 /**
  * Hàm xử lý chính: Dịch tiếng Nhật sang tiếng Việt
@@ -11,9 +49,9 @@ const dictionaryCache = {};
  */
 async function translateJapanese(text) {
     // 1. Kiểm tra Cache
-    if (dictionaryCache[text]) {
-        return dictionaryCache[text];
-    }
+    // if (dictionaryCache[text]) {
+    //     return dictionaryCache[text];
+    // }
 
     // 2. Chế độ Dịch câu (Sentence Mode) - Text dài > 20 ký tự
     if (text.length > 20) {
@@ -86,10 +124,68 @@ async function translateJapanese(text) {
         source: "jisho"
     };
 
+    // 4. Lấy thông tin chi tiết từng Kanji (nếu có)
+    const kanjiList = await getKanjiDetails(text);
+    if (kanjiList.length > 0) {
+        result.kanjiList = kanjiList;
+    }
+
     // Lưu vào cache
     dictionaryCache[text] = result;
 
     return result;
+}
+
+/**
+ * Lấy thông tin chi tiết cho từng Kanji trong text
+ */
+async function getKanjiDetails(text) {
+    const kanjiRegex = /[\u4E00-\u9FAF]/g;
+    const kanjis = text.match(kanjiRegex) || [];
+    // Loại bỏ trùng lặp
+    const uniqueKanjis = [...new Set(kanjis)];
+
+    if (uniqueKanjis.length === 0) return [];
+
+    const kanjiDetails = await Promise.all(uniqueKanjis.map(async (char) => {
+        const info = await jishoService.searchKanji(char);
+
+        // Lấy âm Hán Việt và làm sạch
+        const rawHanViet = hanVietDict[char] || "";
+        const hanviet = cleanHanViet(rawHanViet);
+
+        if (info.found) {
+            // User yêu cầu bỏ nghĩa tiếng Việt của Kanji ("xóa cái bướng bỉnh đi")
+            // Nên ta không cần dịch nghĩa nữa
+
+            return {
+                char: info.kanji || char, // Fallback về char nếu info.kanji lỗi
+                hanviet: hanviet, // Thêm âm Hán Việt đã làm sạch
+                onyomi: info.onyomi,
+                kunyomi: info.kunyomi,
+                jlpt: info.jlpt,
+                meaning: "", // Bỏ nghĩa
+                english: info.meanings[0] // Giữ nghĩa tiếng Anh gốc nếu cần
+            };
+        }
+
+        // Nếu không tìm thấy trên Jisho nhưng có trong từ điển Hán Việt
+        if (hanviet) {
+            return {
+                char: char,
+                hanviet: hanviet,
+                onyomi: [],
+                kunyomi: [],
+                jlpt: null,
+                meaning: "",
+                english: ""
+            };
+        }
+
+        return null;
+    }));
+
+    return kanjiDetails.filter(k => k !== null);
 }
 
 /**

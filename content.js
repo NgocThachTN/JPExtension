@@ -176,7 +176,8 @@ async function translateText(text) {
         data.original,
         data.examples || [], // Thêm examples
         data.source, // Thêm source
-        data.english || "" // Thêm nghĩa tiếng Anh
+        data.english || "", // Thêm nghĩa tiếng Anh
+        data.kanjiList || [] // Thêm danh sách Kanji
       );
     } else {
       displayError(data.error || "Lỗi khi dịch");
@@ -196,7 +197,8 @@ function displayTranslation(
   original,
   examples = [],
   source = "",
-  english = ""
+  english = "",
+  kanjiList = []
 ) {
   if (!translationPopup) return;
 
@@ -254,25 +256,88 @@ function displayTranslation(
     }
 
     contentHTML = `
-        <div class="jp-translator-word-section">
-          <div class="jp-translator-word-left">
-            <div class="jp-translator-original">${original}</div>
-            ${hiraganaHTML}
-          </div>
-          <div class="jp-translator-word-right">
-            <div class="jp-translator-translation"><span class="jp-translator-translation-label">Nghĩa:</span> ${translation}</div>
-          </div>
+        <div class="jp-translator-header">
+            <div class="jp-translator-tabs">
+                <div class="jp-translator-tab active" data-tab="vocab">Từ vựng</div>
+                ${kanjiList && kanjiList.length > 0 ? `<div class="jp-translator-tab" data-tab="kanji">Hán tự (${kanjiList.length})</div>` : ''}
+            </div>
+            <button class="jp-translator-close">×</button>
         </div>
-        ${examplesHTML
-        ? `<div class="jp-translator-examples-container">${examplesHTML}</div>`
-        : ""
-      }
-        <button class="jp-translator-close">×</button>
+
+        <div class="jp-translator-body">
+            <!-- Tab Từ vựng -->
+            <div class="jp-translator-tab-content active" id="jp-tab-vocab">
+                <div class="jp-translator-word-section">
+                  <div class="jp-translator-word-left">
+                    <div class="jp-translator-original">${original}</div>
+                    ${hiraganaHTML}
+                  </div>
+                  <div class="jp-translator-word-right">
+                    <div class="jp-translator-translation"><span class="jp-translator-translation-label">Nghĩa:</span> ${translation}</div>
+                  </div>
+                </div>
+                ${examplesHTML ? `<div class="jp-translator-examples-container">${examplesHTML}</div>` : ""}
+            </div>
+
+            <!-- Tab Kanji -->
+            ${kanjiList && kanjiList.length > 0 ? `
+            <div class="jp-translator-tab-content" id="jp-tab-kanji">
+                <div class="jp-translator-kanji-list">
+                    ${kanjiList.map(k => `
+                    <div class="jp-translator-kanji-item">
+                        <div class="jp-translator-kanji-char-wrapper">
+                            <span class="jp-translator-kanji-char">${k.char}</span>
+                            ${k.jlpt ? `<span class="jp-translator-kanji-jlpt">${k.jlpt}</span>` : ''}
+                        </div>
+                        <div class="jp-translator-kanji-details">
+                            ${/* Hiển thị Hán Việt làm tiêu đề chính, bỏ nghĩa tiếng Việt */ ''}
+                            <div class="jp-translator-kanji-meaning">${k.hanviet || k.meaning || ''}</div>
+                            
+                            <div class="jp-translator-kanji-readings">
+                                ${k.onyomi && k.onyomi.length ? `<div class="jp-translator-reading-row"><span class="jp-translator-reading-label">On:</span> ${k.onyomi.join(', ')}</div>` : ''}
+                                ${k.kunyomi && k.kunyomi.length ? `<div class="jp-translator-reading-row"><span class="jp-translator-reading-label">Kun:</span> ${k.kunyomi.join(', ')}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
       `;
   }
 
-  translationPopup.querySelector(".jp-translator-content").innerHTML =
-    contentHTML;
+  translationPopup.querySelector(".jp-translator-content").innerHTML = contentHTML;
+
+  // Xử lý sự kiện chuyển tab
+  // Xử lý sự kiện chuyển tab (Event Delegation)
+  translationPopup.addEventListener('click', (e) => {
+    const tab = e.target.closest('.jp-translator-tab');
+    if (tab) {
+      e.stopPropagation(); // Ngăn click lan ra ngoài
+
+      // Nếu tab đã active thì không làm gì
+      if (tab.classList.contains('active')) return;
+
+      const tabs = translationPopup.querySelectorAll('.jp-translator-tab');
+
+      // Remove active class from all tabs
+      tabs.forEach(t => t.classList.remove('active'));
+      translationPopup.querySelectorAll('.jp-translator-tab-content').forEach(c => c.classList.remove('active'));
+
+      // Add active class to clicked tab
+      tab.classList.add('active');
+      const tabId = tab.dataset.tab;
+      const contentId = `jp-tab-${tabId}`;
+      const content = translationPopup.querySelector(`#${contentId}`);
+      if (content) {
+        content.classList.add('active');
+      }
+
+      // Cập nhật vị trí popup vì chiều cao có thể thay đổi
+      setTimeout(updatePopupPosition, 50);
+    }
+  });
 
   // Cập nhật lại vị trí sau khi content thay đổi (có thể thay đổi kích thước)
   // Đợi một chút để DOM render xong
@@ -282,20 +347,22 @@ function displayTranslation(
 
   // Thêm sự kiện đóng popup
   const closeBtn = translationPopup.querySelector(".jp-translator-close");
-  closeBtn.addEventListener("click", (e) => {
-    e.stopPropagation(); // Ngăn event bubble lên document
-    if (translationPopup) {
-      window.removeEventListener("resize", updatePopupPosition);
-      window.removeEventListener("scroll", updatePopupPosition);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", updatePopupPosition);
-        window.visualViewport.removeEventListener("scroll", updatePopupPosition);
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Ngăn event bubble lên document
+      if (translationPopup) {
+        window.removeEventListener("resize", updatePopupPosition);
+        window.removeEventListener("scroll", updatePopupPosition);
+        if (window.visualViewport) {
+          window.visualViewport.removeEventListener("resize", updatePopupPosition);
+          window.visualViewport.removeEventListener("scroll", updatePopupPosition);
+        }
+        translationPopup.remove();
+        translationPopup = null;
+        selectedRange = null;
       }
-      translationPopup.remove();
-      translationPopup = null;
-      selectedRange = null;
-    }
-  });
+    });
+  }
 
   // Ngăn click vào popup bị xóa
   translationPopup.addEventListener("click", (e) => {
@@ -340,7 +407,14 @@ document.addEventListener("mousedown", function () {
 });
 
 // Lắng nghe sự kiện khi người dùng bôi đen text
+// Lắng nghe sự kiện khi người dùng bôi đen text
 document.addEventListener("mouseup", function (e) {
+  // Nếu click vào popup thì không làm gì cả
+  if (translationPopup && translationPopup.contains(e.target)) {
+    isSelecting = false;
+    return;
+  }
+
   // Đợi một chút để selection hoàn tất
   setTimeout(() => {
     isSelecting = false;
@@ -368,7 +442,8 @@ document.addEventListener("mouseup", function (e) {
       }
     } else {
       // Nếu không phải tiếng Nhật, xóa popup cũ
-      if (translationPopup) {
+      // Chỉ xóa nếu click ra ngoài (đã check ở đầu hàm, nhưng check lại cho chắc trong timeout)
+      if (translationPopup && !translationPopup.contains(e.target)) {
         translationPopup.remove();
         translationPopup = null;
       }

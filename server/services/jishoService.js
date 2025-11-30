@@ -86,6 +86,31 @@ async function getExamples(text) {
     return examples;
 }
 
+/**
+ * Tra thông tin Kanji
+ * @param {string} kanji - Ký tự Kanji
+ */
+async function searchKanji(kanji) {
+    try {
+        const result = await jisho.searchForKanji(kanji);
+        if (result.found) {
+            return {
+                found: true,
+                kanji: result.query, // Jisho trả về 'query' là ký tự Kanji
+                meanings: result.meaning.split(', '), // Jisho trả về string ngăn cách bởi dấu phẩy
+                kunyomi: result.kunyomi,
+                onyomi: result.onyomi,
+                jlpt: result.jlptLevel
+            };
+        }
+        return { found: false };
+    } catch (error) {
+        console.error(`Lỗi tra Kanji ${kanji}:`, error);
+        return { found: false };
+    }
+}
+
 module.exports = {
-    searchWord
+    searchWord,
+    searchKanji
 };

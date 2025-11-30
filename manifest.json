@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Japanese to Vietnamese Translator",
-  "version": "1.6.0",
+  "version": "1.5.2",
   "description": "Dịch tiếng Nhật sang tiếng Việt và hiển thị hiragana khi bôi đen text",
   "permissions": [
     "activeTab",
