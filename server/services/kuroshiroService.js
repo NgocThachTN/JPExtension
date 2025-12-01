@@ -5,31 +5,39 @@ const path = require("path");
 // Khởi tạo instance
 const kuroshiro = new Kuroshiro();
 let isInitialized = false;
+let initError = null;
 
 // Cache để tăng tốc convert
 const hiraganaCache = new Map();
 const furiganaCache = new Map();
 const MAX_CACHE_SIZE = 500;
 
+// Kiểm tra môi trường Vercel
+const IS_VERCEL = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+
 /**
  * Khởi tạo Kuroshiro với từ điển
  */
 async function init() {
-    if (isInitialized) return;
+    if (isInitialized || initError) return;
 
     try {
         console.log("Đang khởi tạo Kuroshiro...");
-        // Trỏ đến thư mục dict trong public (Source of truth)
-        const dictPath = path.join(__dirname, '..', '..', 'public', 'dict');
+        
+        // Trên Vercel, sử dụng dictionary mặc định của kuromoji
+        // Nếu không phải Vercel, sử dụng dictionary local
+        const analyzerOptions = IS_VERCEL ? {} : {
+            dictPath: path.join(__dirname, '..', '..', 'public', 'dict')
+        };
 
-        await kuroshiro.init(new KuromojiAnalyzer({
-            dictPath: dictPath
-        }));
+        await kuroshiro.init(new KuromojiAnalyzer(analyzerOptions));
 
         isInitialized = true;
         console.log("Kuroshiro đã khởi tạo thành công!");
     } catch (err) {
         console.error("Lỗi khởi tạo Kuroshiro:", err);
+        initError = err;
+        // Không throw error, cho phép fallback
     }
 }
 
@@ -38,9 +46,13 @@ async function init() {
  */
 async function waitForInit() {
     if (isInitialized) return true;
+    if (initError) return false; // Đã thử init và thất bại
 
+    // Thử init nếu chưa
+    await init();
+    
     let retries = 0;
-    while (!isInitialized && retries < 20) { // Đợi tối đa 2 giây
+    while (!isInitialized && !initError && retries < 20) { // Đợi tối đa 2 giây
         await new Promise(resolve => setTimeout(resolve, 100));
         retries++;
     }

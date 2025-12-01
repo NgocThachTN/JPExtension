@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Extension files (không cần cho server)
+*.png
+popup.html
+popup.js
+background.js
+content.js
+manifest.json
+styles.css
+health.html
+
+# Source files
+src/
+
+# Build scripts
+scripts/
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docs
+README.md
