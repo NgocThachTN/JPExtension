@@ -155,10 +155,6 @@ async function processExamples(examples, text, firstMeaning) {
     return generateMockExamples(text, firstMeaning);
 }
 
-// DEPRECATED - Để lại cho tương thích, logic đã được tích hợp ở trên
-async function _oldProcessExamples(jishoResult, text) {
-    // Xử lý ví dụ (Examples)
-
 /**
  * Lấy thông tin chi tiết cho từng Kanji trong text
  */
