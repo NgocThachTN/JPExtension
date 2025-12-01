@@ -1,0 +1,459 @@
+/* CSS cho popup translation */
+#jp-translator-popup {
+  position: fixed;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  pointer-events: auto;
+}
+
+.jp-translator-content {
+  background: #ffffff;
+  border: 1.5px solid #8b6f47;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+  min-width: 240px;
+  max-width: min(420px, 90vw);
+  max-height: min(500px, 80vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #8b6f47 #f5f5f5;
+  position: relative;
+  line-height: 1.5;
+  font-size: 13px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Custom scrollbar cho WebKit (Chrome, Safari) */
+.jp-translator-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.jp-translator-content::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 3px;
+}
+
+.jp-translator-content::-webkit-scrollbar-thumb {
+  background: #8b6f47;
+  border-radius: 3px;
+}
+
+.jp-translator-content::-webkit-scrollbar-thumb:hover {
+  background: #6b4423;
+}
+
+/* Layout ngang cho từ vựng */
+.jp-translator-word-section {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e8e8e8;
+  flex-wrap: wrap;
+}
+
+.jp-translator-word-left {
+  flex: 0 0 auto;
+  min-width: 100px;
+  max-width: 180px;
+}
+
+.jp-translator-word-right {
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+.jp-translator-original {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 4px;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.3;
+  letter-spacing: 0.3px;
+}
+
+.jp-translator-hiragana {
+  font-size: 13px;
+  color: #6b4423;
+  margin-bottom: 4px;
+  font-style: normal;
+  border-left: 2px solid #8b6f47;
+  padding-left: 6px;
+  background: #faf8f5;
+  border-radius: 3px;
+  padding: 4px 6px;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.jp-translator-hiragana-note {
+  font-size: 11px;
+  color: #8b6f47;
+  margin-top: 2px;
+  padding-left: 6px;
+  font-style: italic;
+  opacity: 0.8;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+  max-width: 100%;
+}
+
+.jp-translator-translation {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 600;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  margin-bottom: 0;
+  line-height: 1.5;
+  padding: 6px 8px;
+  background: #faf8f5;
+  border-radius: 4px;
+  border-left: 2px solid #8b6f47;
+}
+
+.jp-translator-translation-label {
+  font-weight: 700;
+  color: #6b4423;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.jp-translator-examples-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b4423;
+  margin-top: 10px;
+  margin-bottom: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e8e8e8;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.jp-translator-examples-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jp-translator-example {
+  margin-bottom: 0;
+  padding: 8px;
+  background: #faf8f5;
+  border-radius: 4px;
+  border-left: 3px solid #8b6f47;
+  transition: all 0.2s ease;
+}
+
+.jp-translator-example:hover {
+  background: #f5f3f0;
+  transform: translateX(1px);
+}
+
+.jp-translator-example-jp {
+  font-size: 13px;
+  color: #2c3e50;
+  margin-bottom: 4px;
+  word-break: break-word;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.jp-translator-example-vi {
+  font-size: 12px;
+  color: #5a6c7d;
+  font-style: normal;
+  word-break: break-word;
+  line-height: 1.4;
+  padding-left: 6px;
+  border-left: 2px solid #d4c4b0;
+}
+
+.jp-translator-loading {
+  color: #6b4423;
+  font-style: normal;
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.jp-translator-loading::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 2px solid #8b6f47;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.jp-translator-error {
+  color: #d32f2f;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px;
+  background: #ffebee;
+  border-radius: 4px;
+  border-left: 2px solid #d32f2f;
+}
+
+.jp-translator-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #8b6f47;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* CSS cho Furigana (Ruby text) */
+ruby {
+  ruby-position: over; /* Hiển thị Furigana ở trên */
+}
+
+rt {
+  font-size: 10px;
+  color: #666;
+  line-height: 1;
+}
+
+.jp-translator-close:hover {
+  background: #6b4423;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.jp-translator-close:active {
+  transform: scale(0.95);
+}
+
+/* Style riêng cho popup dịch câu (Sentence Mode) */
+#jp-translator-popup.sentence-mode .jp-translator-content {
+  border: 1.5px solid #8b6f47;
+  padding: 10px;
+  max-width: min(400px, 90vw);
+}
+
+#jp-translator-popup.sentence-mode .jp-translator-sentence-label {
+  font-size: 10px;
+  color: #6b4423;
+  margin-bottom: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+#jp-translator-popup.sentence-mode .jp-translator-translation {
+  font-size: 14px;
+  color: #2c3e50;
+  margin-bottom: 0;
+  line-height: 1.6;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #8b6f47;
+}
+
+#jp-translator-popup.sentence-mode .jp-translator-loading {
+  color: #6b4423;
+}
+
+/* Kanji Section Styles */
+.jp-translator-kanji-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.jp-translator-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b4423;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.jp-translator-kanji-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jp-translator-kanji-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  background: #faf8f5;
+  border-radius: 4px;
+  border-left: 3px solid #8b6f47;
+}
+
+.jp-translator-kanji-char-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  background: #fff;
+  border-radius: 4px;
+  padding: 4px;
+  border: 1px solid #e8e8e8;
+}
+
+.jp-translator-kanji-char {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+.jp-translator-kanji-jlpt {
+  font-size: 9px;
+  color: #fff;
+  background: #8b6f47;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.jp-translator-kanji-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.jp-translator-kanji-meaning {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.jp-translator-kanji-hanviet {
+  font-size: 12px;
+  color: #d35400; /* Màu cam đậm cho Hán Việt */
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.jp-translator-kanji-readings {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.jp-translator-reading-row {
+  font-size: 11px;
+  color: #5a6c7d;
+  line-height: 1.3;
+}
+
+.jp-translator-reading-label {
+  color: #8b6f47;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* Tabs Styles */
+.jp-translator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 10px;
+  padding-right: 0;
+}
+
+.jp-translator-tabs {
+  display: flex;
+  gap: 15px;
+}
+
+.jp-translator-tab {
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9aa0a6;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+.jp-translator-tab:hover {
+  color: #6b4423;
+}
+
+.jp-translator-tab.active {
+  color: #8b6f47;
+  border-bottom-color: #8b6f47;
+}
+
+.jp-translator-tab-content {
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.jp-translator-tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Update Close Button for Header */
+.jp-translator-close {
+  position: static;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+  transform: none;
+  box-shadow: none;
+}
+
+.jp-translator-close:hover {
+  background: #6b4423;
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

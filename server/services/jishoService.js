@@ -44,16 +44,28 @@ async function searchWord(text) {
                 meanings = firstSense.english_definitions || [];
             }
 
-            // 3. Lấy ví dụ (Examples) - Không chờ để tăng tốc
-            let examples = await getExamples(text);
+            // 3. Lấy ví dụ (Examples) - Chạy song song không chờ
+            // Tối ưu: Không await để trả kết quả nhanh hơn
+            const examplesPromise = getExamplesOptimized(text);
 
             const result = {
                 success: true,
                 hiragana: hiragana || text,
                 meanings: meanings,
                 word: japanese.word || text,
-                examples: examples,
+                examples: [], // Sẽ điền sau
             };
+
+            // Đợi examples (tối đa 500ms)
+            try {
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('timeout')), 500)
+                );
+                result.examples = await Promise.race([examplesPromise, timeoutPromise]);
+            } catch (e) {
+                // Timeout hoặc lỗi - trả về mảng rỗng
+                result.examples = [];
+            }
 
             // Lưu vào cache
             if (wordCache.size >= MAX_CACHE_SIZE) {
@@ -76,7 +88,36 @@ async function searchWord(text) {
 }
 
 /**
- * Lấy ví dụ câu từ Jisho
+ * Lấy ví dụ câu từ Jisho - Phiên bản tối ưu
+ * Không gọi furigana để tăng tốc
+ */
+async function getExamplesOptimized(text) {
+    let examples = [];
+    try {
+        const examplesData = await jisho.searchForExamples(text);
+
+        if (examplesData.results && examplesData.results.length > 0) {
+            // Lấy tối đa 2 ví dụ đầu tiên
+            const rawExamples = examplesData.results.slice(0, 2);
+
+            // Không gọi furigana để tăng tốc - sẽ xử lý lazy ở client
+            examples = rawExamples.map((result) => {
+                const japanese = result.kanji || result.kana || "";
+                return {
+                    japanese: japanese,
+                    english: result.english || "",
+                    html: japanese // Sẽ thêm furigana sau nếu cần
+                };
+            });
+        }
+    } catch (err) {
+        // Không log lỗi này để tránh spam console
+    }
+    return examples;
+}
+
+/**
+ * Lấy ví dụ câu từ Jisho - Phiên bản đầy đủ với furigana
  */
 async function getExamples(text) {
     let examples = [];
@@ -129,17 +170,17 @@ async function searchKanji(kanji) {
                 onyomi: result.onyomi,
                 jlpt: result.jlptLevel
             };
-            
+
             // Lưu vào cache
             if (kanjiCache.size >= MAX_CACHE_SIZE) {
                 const firstKey = kanjiCache.keys().next().value;
                 kanjiCache.delete(firstKey);
             }
             kanjiCache.set(kanji, kanjiResult);
-            
+
             return kanjiResult;
         }
-        
+
         const notFound = { found: false };
         kanjiCache.set(kanji, notFound);
         return notFound;

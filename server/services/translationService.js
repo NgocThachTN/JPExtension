@@ -68,7 +68,7 @@ async function translateJapanese(text) {
             examples: [],
             source: "google"
         };
-        
+
         // Cache kết quả câu
         dictionaryCache[text] = result;
         return result;
@@ -96,7 +96,7 @@ async function translateJapanese(text) {
             examples: [],
             source: "google"
         };
-        
+
         // Cache kết quả
         dictionaryCache[text] = result;
         return result;
@@ -104,29 +104,50 @@ async function translateJapanese(text) {
 
     // 3.2. Nếu Jisho tìm thấy -> Xử lý kết quả
 
-    // Chạy song song: Dịch nghĩa + Lấy thông tin Kanji + Xử lý ví dụ
-    const [translatedMeanings, kanjiList, processedExamples] = await Promise.all([
-        // Dịch nghĩa tiếng Anh sang tiếng Việt
-        Promise.all(jishoResult.meanings.map(m => googleTranslateService.translateText(m, 'en', 'vi'))),
+    // Tối ưu: Dịch nghĩa và lấy Kanji song song
+    // Dùng batchTranslate thay vì từng cái
+    const [translatedMeanings, kanjiList] = await Promise.all([
+        // Dịch nghĩa tiếng Anh sang tiếng Việt (batch)
+        googleTranslateService.batchTranslate(jishoResult.meanings, 'en', 'vi'),
         // Lấy thông tin Kanji
-        getKanjiDetails(text),
-        // Xử lý ví dụ
-        processExamples(jishoResult.examples, text, jishoResult.meanings[0])
+        getKanjiDetails(text)
     ]);
 
+    // Trả về kết quả ngay, không chờ ví dụ
     const result = {
         success: true,
         original: text,
         hiragana: jishoResult.hiragana,
         translation: translatedMeanings.join(", "),
         english: jishoResult.meanings.join(", "),
-        examples: processedExamples,
+        // Trả về examples chưa dịch để hiển thị nhanh
+        examples: jishoResult.examples.map(ex => ({
+            japanese: ex.japanese,
+            english: ex.english,
+            html: ex.html || ex.japanese,
+            vietnamese: "" // Sẽ load lazy
+        })),
         source: "jisho"
     };
 
     // Thêm kanji list nếu có
     if (kanjiList.length > 0) {
         result.kanjiList = kanjiList;
+    }
+
+    // Xử lý dịch ví dụ song song (không block kết quả chính)
+    if (jishoResult.examples && jishoResult.examples.length > 0) {
+        const exampleTexts = jishoResult.examples.map(ex => ex.japanese);
+        const translatedExamples = await googleTranslateService.batchTranslate(exampleTexts, 'ja', 'vi');
+        result.examples = jishoResult.examples.map((ex, i) => ({
+            japanese: ex.japanese,
+            english: ex.english,
+            html: ex.html || ex.japanese,
+            vietnamese: translatedExamples[i] || ""
+        }));
+    } else if (!jishoResult.examples || jishoResult.examples.length === 0) {
+        // Tạo ví dụ mẫu nếu không có
+        result.examples = await generateMockExamples(text, jishoResult.meanings[0]);
     }
 
     // Lưu vào cache
@@ -208,11 +229,9 @@ async function getKanjiDetails(text) {
 }
 
 /**
- * Helper: Tạo ví dụ mẫu khi không có dữ liệu
+ * Helper: Tạo ví dụ mẫu khi không có dữ liệu - Tối ưu với batch translate
  */
 async function generateMockExamples(text, englishMeaning) {
-    console.log(`[Auto-Gen] Tạo ví dụ mẫu cho "${text}"`);
-
     const isVerb = /[るうつくぐすぬむぶふ]$/.test(text);
     const isAdjective = /[いな]$/.test(text);
 
@@ -236,16 +255,12 @@ async function generateMockExamples(text, englishMeaning) {
         en2 = `I use ${englishMeaning}.`;
     }
 
-    const [vi1, vi2, html1, html2] = await Promise.all([
-        googleTranslateService.translateText(ex1, 'ja', 'vi'),
-        googleTranslateService.translateText(ex2, 'ja', 'vi'),
-        kuroshiroService.addFurigana(ex1),
-        kuroshiroService.addFurigana(ex2)
-    ]);
+    // Tối ưu: Dùng batch translate thay vì 2 API calls riêng
+    const translations = await googleTranslateService.batchTranslate([ex1, ex2], 'ja', 'vi');
 
     return [
-        { japanese: ex1, english: en1, vietnamese: vi1, html: html1 },
-        { japanese: ex2, english: en2, vietnamese: vi2, html: html2 }
+        { japanese: ex1, english: en1, vietnamese: translations[0], html: ex1 },
+        { japanese: ex2, english: en2, vietnamese: translations[1], html: ex2 }
     ];
 }
 

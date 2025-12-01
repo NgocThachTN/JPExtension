@@ -23,7 +23,7 @@ async function init() {
 
     try {
         console.log("Đang khởi tạo Kuroshiro...");
-        
+
         // Trên Vercel, sử dụng dictionary mặc định của kuromoji
         // Nếu không phải Vercel, sử dụng dictionary local
         const analyzerOptions = IS_VERCEL ? {} : {
@@ -50,7 +50,7 @@ async function waitForInit() {
 
     // Thử init nếu chưa
     await init();
-    
+
     let retries = 0;
     while (!isInitialized && !initError && retries < 20) { // Đợi tối đa 2 giây
         await new Promise(resolve => setTimeout(resolve, 100));

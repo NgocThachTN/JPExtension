@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
     try {
         const htmlPath = path.join(__dirname, '..', 'health.html');
         const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-        
+
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.status(200).send(htmlContent);
     } catch (error) {
