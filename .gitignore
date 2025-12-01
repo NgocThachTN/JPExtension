@@ -15,3 +15,5 @@ node_modules/
 /icon128.png
 /dict/
 
+.vercel
+.env*.local

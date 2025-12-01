@@ -9,13 +9,9 @@ background.js
 content.js
 manifest.json
 styles.css
-health.html
 
 # Source files
 src/
-
-# Build scripts
-scripts/
 
 # Git
 .git
