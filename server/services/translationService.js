@@ -48,17 +48,18 @@ function cleanHanViet(str) {
  * @param {string} text - Text cần dịch
  */
 async function translateJapanese(text) {
-    // 1. Kiểm tra Cache
-    // if (dictionaryCache[text]) {
-    //     return dictionaryCache[text];
-    // }
+    // 1. Kiểm tra Cache - Trả về ngay nếu đã có kết quả
+    if (dictionaryCache[text]) {
+        console.log(`[Cache Hit] Trả về kết quả cache cho: ${text}`);
+        return dictionaryCache[text];
+    }
 
     // 2. Chế độ Dịch câu (Sentence Mode) - Text dài > 20 ký tự
     if (text.length > 20) {
         console.log(`[Sentence Mode] Dịch câu dài: ${text.length} ký tự`);
         const googleTranslation = await googleTranslateService.translateText(text, 'ja', 'vi');
 
-        return {
+        const result = {
             success: true,
             original: text,
             hiragana: "", // Câu dài không cần hiragana
@@ -67,6 +68,10 @@ async function translateJapanese(text) {
             examples: [],
             source: "google"
         };
+        
+        // Cache kết quả câu
+        dictionaryCache[text] = result;
+        return result;
     }
 
     // 3. Chế độ Tra từ (Word Mode) - Text ngắn <= 20 ký tự
@@ -76,10 +81,13 @@ async function translateJapanese(text) {
     if (!jishoResult.success) {
         console.log(`[Fallback] Jisho không tìm thấy "${text}", dùng Google Translate`);
 
-        const googleTranslation = await googleTranslateService.translateText(text, 'ja', 'vi');
-        const hiragana = await kuroshiroService.toHiragana(text);
+        // Chạy song song để tăng tốc
+        const [googleTranslation, hiragana] = await Promise.all([
+            googleTranslateService.translateText(text, 'ja', 'vi'),
+            kuroshiroService.toHiragana(text)
+        ]);
 
-        return {
+        const result = {
             success: true,
             original: text,
             hiragana: hiragana,
@@ -88,31 +96,23 @@ async function translateJapanese(text) {
             examples: [],
             source: "google"
         };
+        
+        // Cache kết quả
+        dictionaryCache[text] = result;
+        return result;
     }
 
     // 3.2. Nếu Jisho tìm thấy -> Xử lý kết quả
 
-    // Dịch nghĩa tiếng Anh sang tiếng Việt
-    const translatedMeanings = await Promise.all(
-        jishoResult.meanings.map(m => googleTranslateService.translateText(m, 'en', 'vi'))
-    );
-
-    // Xử lý ví dụ (Examples)
-    let processedExamples = [];
-
-    if (jishoResult.examples && jishoResult.examples.length > 0) {
-        // Dịch các ví dụ có sẵn từ Jisho
-        for (const example of jishoResult.examples) {
-            const vietnameseExample = await googleTranslateService.translateText(example.japanese, 'ja', 'vi');
-            processedExamples.push({
-                ...example,
-                vietnamese: vietnameseExample
-            });
-        }
-    } else {
-        // Nếu không có ví dụ, tạo ví dụ mẫu (Auto-generate)
-        processedExamples = await generateMockExamples(text, jishoResult.meanings[0]);
-    }
+    // Chạy song song: Dịch nghĩa + Lấy thông tin Kanji + Xử lý ví dụ
+    const [translatedMeanings, kanjiList, processedExamples] = await Promise.all([
+        // Dịch nghĩa tiếng Anh sang tiếng Việt
+        Promise.all(jishoResult.meanings.map(m => googleTranslateService.translateText(m, 'en', 'vi'))),
+        // Lấy thông tin Kanji
+        getKanjiDetails(text),
+        // Xử lý ví dụ
+        processExamples(jishoResult.examples, text, jishoResult.meanings[0])
+    ]);
 
     const result = {
         success: true,
@@ -124,8 +124,7 @@ async function translateJapanese(text) {
         source: "jisho"
     };
 
-    // 4. Lấy thông tin chi tiết từng Kanji (nếu có)
-    const kanjiList = await getKanjiDetails(text);
+    // Thêm kanji list nếu có
     if (kanjiList.length > 0) {
         result.kanjiList = kanjiList;
     }
@@ -135,6 +134,30 @@ async function translateJapanese(text) {
 
     return result;
 }
+
+/**
+ * Xử lý ví dụ - Tách riêng để chạy song song
+ */
+async function processExamples(examples, text, firstMeaning) {
+    if (examples && examples.length > 0) {
+        // Dịch các ví dụ song song
+        return Promise.all(
+            examples.map(async (example) => {
+                const vietnameseExample = await googleTranslateService.translateText(example.japanese, 'ja', 'vi');
+                return {
+                    ...example,
+                    vietnamese: vietnameseExample
+                };
+            })
+        );
+    }
+    // Nếu không có ví dụ, tạo ví dụ mẫu
+    return generateMockExamples(text, firstMeaning);
+}
+
+// DEPRECATED - Để lại cho tương thích, logic đã được tích hợp ở trên
+async function _oldProcessExamples(jishoResult, text) {
+    // Xử lý ví dụ (Examples)
 
 /**
  * Lấy thông tin chi tiết cho từng Kanji trong text

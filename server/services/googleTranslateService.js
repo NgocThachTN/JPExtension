@@ -3,6 +3,10 @@
  * Sử dụng API endpoint miễn phí của Google
  */
 
+// Cache để tránh gọi API lại cho cùng một text
+const translateCache = new Map();
+const MAX_CACHE_SIZE = 1000;
+
 /**
  * Dịch văn bản
  * @param {string} text - Văn bản cần dịch
@@ -12,6 +16,12 @@
 async function translateText(text, sl = 'en', tl = 'vi') {
     try {
         if (!text) return "";
+
+        // Kiểm tra cache
+        const cacheKey = `${sl}:${tl}:${text}`;
+        if (translateCache.has(cacheKey)) {
+            return translateCache.get(cacheKey);
+        }
 
         // Giới hạn độ dài để tránh lỗi URL quá dài
         if (text.length > 1000) {
@@ -34,7 +44,17 @@ async function translateText(text, sl = 'en', tl = 'vi') {
             const data = JSON.parse(textResponse);
             if (data && data[0]) {
                 // Nối các đoạn dịch lại với nhau
-                return data[0].map(segment => segment[0]).join("");
+                const result = data[0].map(segment => segment[0]).join("");
+                
+                // Lưu vào cache
+                if (translateCache.size >= MAX_CACHE_SIZE) {
+                    // Xóa entry cũ nhất
+                    const firstKey = translateCache.keys().next().value;
+                    translateCache.delete(firstKey);
+                }
+                translateCache.set(cacheKey, result);
+                
+                return result;
             }
         } catch (e) {
             console.error("Lỗi parse JSON từ Google Translate:", e);

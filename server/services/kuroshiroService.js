@@ -6,6 +6,11 @@ const path = require("path");
 const kuroshiro = new Kuroshiro();
 let isInitialized = false;
 
+// Cache để tăng tốc convert
+const hiraganaCache = new Map();
+const furiganaCache = new Map();
+const MAX_CACHE_SIZE = 500;
+
 /**
  * Khởi tạo Kuroshiro với từ điển
  */
@@ -52,14 +57,28 @@ async function addFurigana(text) {
 
     if (!isInitialized || !text) return text;
 
+    // Kiểm tra cache
+    if (furiganaCache.has(text)) {
+        return furiganaCache.get(text);
+    }
+
     try {
         // Nếu đã có thẻ ruby thì không xử lý nữa
         if (text.includes("<ruby>")) return text;
 
-        return await kuroshiro.convert(text, {
+        const result = await kuroshiro.convert(text, {
             mode: "furigana",
             to: "hiragana"
         });
+
+        // Lưu vào cache
+        if (furiganaCache.size >= MAX_CACHE_SIZE) {
+            const firstKey = furiganaCache.keys().next().value;
+            furiganaCache.delete(firstKey);
+        }
+        furiganaCache.set(text, result);
+
+        return result;
     } catch (e) {
         console.error("Lỗi convert Kuroshiro:", e);
         return text;
@@ -74,8 +93,22 @@ async function toHiragana(text) {
     await waitForInit();
     if (!isInitialized) return "";
 
+    // Kiểm tra cache
+    if (hiraganaCache.has(text)) {
+        return hiraganaCache.get(text);
+    }
+
     try {
-        return await kuroshiro.convert(text, { to: "hiragana", mode: "normal" });
+        const result = await kuroshiro.convert(text, { to: "hiragana", mode: "normal" });
+
+        // Lưu vào cache
+        if (hiraganaCache.size >= MAX_CACHE_SIZE) {
+            const firstKey = hiraganaCache.keys().next().value;
+            hiraganaCache.delete(firstKey);
+        }
+        hiraganaCache.set(text, result);
+
+        return result;
     } catch (e) {
         console.error("Lỗi convert Hiragana:", e);
         return "";

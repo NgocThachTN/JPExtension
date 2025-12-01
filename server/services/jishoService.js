@@ -4,6 +4,11 @@ const kuroshiroService = require("./kuroshiroService");
 // Khởi tạo Jisho Client
 const jisho = new JishoAPI();
 
+// Cache để tăng tốc tra từ
+const wordCache = new Map();
+const kanjiCache = new Map();
+const MAX_CACHE_SIZE = 500;
+
 /**
  * Tra từ điển Jisho
  * @param {string} text - Từ cần tra
@@ -11,6 +16,11 @@ const jisho = new JishoAPI();
  */
 async function searchWord(text) {
     try {
+        // Kiểm tra cache
+        if (wordCache.has(text)) {
+            return wordCache.get(text);
+        }
+
         const url = `https://jisho.org/api/v1/search/words?keyword=${encodeURIComponent(text)}`;
         const response = await fetch(url);
         const data = await response.json();
@@ -34,19 +44,31 @@ async function searchWord(text) {
                 meanings = firstSense.english_definitions || [];
             }
 
-            // 3. Lấy ví dụ (Examples)
+            // 3. Lấy ví dụ (Examples) - Không chờ để tăng tốc
             let examples = await getExamples(text);
 
-            return {
+            const result = {
                 success: true,
                 hiragana: hiragana || text,
                 meanings: meanings,
                 word: japanese.word || text,
                 examples: examples,
             };
+
+            // Lưu vào cache
+            if (wordCache.size >= MAX_CACHE_SIZE) {
+                const firstKey = wordCache.keys().next().value;
+                wordCache.delete(firstKey);
+            }
+            wordCache.set(text, result);
+
+            return result;
         }
 
-        return { success: false };
+        // Cache kết quả không tìm thấy
+        const notFound = { success: false };
+        wordCache.set(text, notFound);
+        return notFound;
     } catch (error) {
         console.error("Lỗi Jisho API:", error);
         return { success: false, error: error.message };
@@ -92,18 +114,35 @@ async function getExamples(text) {
  */
 async function searchKanji(kanji) {
     try {
+        // Kiểm tra cache
+        if (kanjiCache.has(kanji)) {
+            return kanjiCache.get(kanji);
+        }
+
         const result = await jisho.searchForKanji(kanji);
         if (result.found) {
-            return {
+            const kanjiResult = {
                 found: true,
-                kanji: result.query, // Jisho trả về 'query' là ký tự Kanji
-                meanings: result.meaning.split(', '), // Jisho trả về string ngăn cách bởi dấu phẩy
+                kanji: result.query,
+                meanings: result.meaning.split(', '),
                 kunyomi: result.kunyomi,
                 onyomi: result.onyomi,
                 jlpt: result.jlptLevel
             };
+            
+            // Lưu vào cache
+            if (kanjiCache.size >= MAX_CACHE_SIZE) {
+                const firstKey = kanjiCache.keys().next().value;
+                kanjiCache.delete(firstKey);
+            }
+            kanjiCache.set(kanji, kanjiResult);
+            
+            return kanjiResult;
         }
-        return { found: false };
+        
+        const notFound = { found: false };
+        kanjiCache.set(kanji, notFound);
+        return notFound;
     } catch (error) {
         console.error(`Lỗi tra Kanji ${kanji}:`, error);
         return { found: false };
